@@ -6,7 +6,7 @@ import platform
 
 import pytest
 
-from openjarvis.tools.code_interpreter import _validate_ast
+from jarvis.tools.code_interpreter import _validate_ast
 
 
 class TestCodeInterpreterValidation:
@@ -54,7 +54,7 @@ class TestCodeInterpreterValidation:
         from types import SimpleNamespace
         from unittest.mock import MagicMock
 
-        from openjarvis.tools.code_interpreter import _child_limits
+        from jarvis.tools.code_interpreter import _child_limits
 
         fake_resource = SimpleNamespace(RLIMIT_CPU=1, RLIMIT_AS=2, RLIMIT_FSIZE=3)
         fake_resource.setrlimit = MagicMock(
@@ -62,7 +62,7 @@ class TestCodeInterpreterValidation:
         )
         monkeypatch.setitem(sys.modules, "resource", fake_resource)
         setsid = MagicMock()
-        monkeypatch.setattr("openjarvis.tools.code_interpreter.os.setsid", setsid)
+        monkeypatch.setattr("jarvis.tools.code_interpreter.os.setsid", setsid)
 
         _child_limits()
 

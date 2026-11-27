@@ -8,9 +8,9 @@ from collections import Counter
 
 import pytest
 
-import openjarvis.security.scanner as scanner_module
-from openjarvis.security.scanner import PIIScanner, SecretScanner
-from openjarvis.security.types import ThreatLevel
+import jarvis.security.scanner as scanner_module
+from jarvis.security.scanner import PIIScanner, SecretScanner
+from jarvis.security.types import ThreatLevel
 
 
 @pytest.mark.parametrize("scanner_class", [SecretScanner, PIIScanner])
@@ -81,9 +81,9 @@ def test_native_failure_does_not_log_the_scanned_payload(
 
 def test_long_non_email_input_does_not_stall_the_fallback():
     code = """\
-from openjarvis import _rust_bridge
+from jarvis import _rust_bridge
 _rust_bridge.RUST_AVAILABLE = False
-from openjarvis.security.scanner import PIIScanner
+from jarvis.security.scanner import PIIScanner
 assert PIIScanner().scan('a' * 100000).clean
 """
     subprocess.run(

@@ -13,7 +13,7 @@ from unittest.mock import MagicMock, patch
 
 class TestDSPyOptimizerConfig:
     def test_default_config(self) -> None:
-        from openjarvis.core.config import DSPyOptimizerConfig
+        from jarvis.core.config import DSPyOptimizerConfig
 
         cfg = DSPyOptimizerConfig()
         assert cfg.optimizer == "BootstrapFewShotWithRandomSearch"
@@ -21,8 +21,8 @@ class TestDSPyOptimizerConfig:
         assert cfg.min_traces == 20
 
     def test_optimizer_init(self) -> None:
-        from openjarvis.core.config import DSPyOptimizerConfig
-        from openjarvis.learning.agents.dspy_optimizer import DSPyAgentOptimizer
+        from jarvis.core.config import DSPyOptimizerConfig
+        from jarvis.learning.agents.dspy_optimizer import DSPyAgentOptimizer
 
         cfg = DSPyOptimizerConfig()
         optimizer = DSPyAgentOptimizer(cfg)
@@ -31,8 +31,8 @@ class TestDSPyOptimizerConfig:
 
 class TestDSPyOptimizerTraceConversion:
     def test_missing_safe_cache_controls_fail_before_model_use(self, monkeypatch):
-        import openjarvis.learning.agents.dspy_optimizer as mod
-        from openjarvis.core.config import DSPyOptimizerConfig
+        import jarvis.learning.agents.dspy_optimizer as mod
+        from jarvis.core.config import DSPyOptimizerConfig
 
         model = MagicMock()
         monkeypatch.setattr(mod, "HAS_DSPY", True)
@@ -46,8 +46,8 @@ class TestDSPyOptimizerTraceConversion:
         model.assert_not_called()
 
     def test_too_few_traces_skipped(self) -> None:
-        from openjarvis.core.config import DSPyOptimizerConfig
-        from openjarvis.learning.agents.dspy_optimizer import DSPyAgentOptimizer
+        from jarvis.core.config import DSPyOptimizerConfig
+        from jarvis.learning.agents.dspy_optimizer import DSPyAgentOptimizer
 
         optimizer = DSPyAgentOptimizer(DSPyOptimizerConfig(min_traces=10))
         mock_store = MagicMock()
@@ -57,9 +57,9 @@ class TestDSPyOptimizerTraceConversion:
         assert result["status"] == "skipped"
 
     def test_optimize_returns_toml_updates(self) -> None:
-        from openjarvis.core.config import DSPyOptimizerConfig
-        from openjarvis.core.types import StepType, Trace, TraceStep
-        from openjarvis.learning.agents.dspy_optimizer import DSPyAgentOptimizer
+        from jarvis.core.config import DSPyOptimizerConfig
+        from jarvis.core.types import StepType, Trace, TraceStep
+        from jarvis.learning.agents.dspy_optimizer import DSPyAgentOptimizer
 
         cfg = DSPyOptimizerConfig(min_traces=1)
         optimizer = DSPyAgentOptimizer(cfg)
@@ -94,7 +94,7 @@ class TestDSPyOptimizerTraceConversion:
         mock_store.list_traces.return_value = traces
 
         # Mock dspy so the test works without the dependency
-        import openjarvis.learning.agents.dspy_optimizer as mod
+        import jarvis.learning.agents.dspy_optimizer as mod
 
         with patch.object(mod, "HAS_DSPY", True):
             with patch.object(
@@ -111,8 +111,8 @@ class TestDSPyOptimizerTraceConversion:
 
     def test_extracts_demos_from_compiled_chain_of_thought(self, monkeypatch) -> None:
         """DSPy stores compiled ChainOfThought demos on its inner predictor."""
-        import openjarvis.learning.agents.dspy_optimizer as mod
-        from openjarvis.core.config import DSPyOptimizerConfig
+        import jarvis.learning.agents.dspy_optimizer as mod
+        from jarvis.core.config import DSPyOptimizerConfig
 
         class FakeExample:
             def __init__(self, *, question: str, answer: str) -> None:
@@ -186,7 +186,7 @@ def test_importing_optimizer_does_not_load_optional_sdk(tmp_path):
             sys.executable,
             "-c",
             "import sys; "
-            "from openjarvis.learning.agents import dspy_optimizer as m; "
+            "from jarvis.learning.agents import dspy_optimizer as m; "
             "assert m.HAS_DSPY; assert 'dspy' not in sys.modules",
         ],
         env={**os.environ, "PYTHONPATH": str(tmp_path) + os.pathsep + str(source)},

@@ -9,13 +9,13 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from openjarvis.mcp.client import MCPClient
-from openjarvis.mcp.protocol import MCPError, MCPResponse
-from openjarvis.mcp.server import MCPServer
-from openjarvis.mcp.transport import InProcessTransport
-from openjarvis.tools._stubs import ToolSpec
-from openjarvis.tools.calculator import CalculatorTool
-from openjarvis.tools.think import ThinkTool
+from jarvis.mcp.client import MCPClient
+from jarvis.mcp.protocol import MCPError, MCPResponse
+from jarvis.mcp.server import MCPServer
+from jarvis.mcp.transport import InProcessTransport
+from jarvis.tools._stubs import ToolSpec
+from jarvis.tools.calculator import CalculatorTool
+from jarvis.tools.think import ThinkTool
 
 
 @pytest.fixture
@@ -31,7 +31,7 @@ class TestMCPClient:
         result = client.initialize()
         assert "protocolVersion" in result
         assert "serverInfo" in result
-        assert result["serverInfo"]["name"] == "openjarvis"
+        assert result["serverInfo"]["name"] == "jarvis"
         assert client._initialized is True
 
     def test_initialize_sets_capabilities(self, client):

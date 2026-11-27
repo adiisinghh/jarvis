@@ -6,13 +6,13 @@ import json
 
 import pytest
 
-from openjarvis.core.events import EventBus, EventType
-from openjarvis.core.types import ToolCall, ToolResult
-from openjarvis.security.audit import AuditLogger
-from openjarvis.security.capabilities import DEFAULT_TOOL_CAPABILITIES
-from openjarvis.security.types import ThreatLevel
-from openjarvis.tools._stubs import BaseTool, ToolExecutor, ToolSpec
-from openjarvis.tools.code_interpreter import CodeInterpreterTool
+from jarvis.core.events import EventBus, EventType
+from jarvis.core.types import ToolCall, ToolResult
+from jarvis.security.audit import AuditLogger
+from jarvis.security.capabilities import DEFAULT_TOOL_CAPABILITIES
+from jarvis.security.types import ThreatLevel
+from jarvis.tools._stubs import BaseTool, ToolExecutor, ToolSpec
+from jarvis.tools.code_interpreter import CodeInterpreterTool
 
 # ---------------------------------------------------------------------------
 # Helpers

@@ -7,9 +7,9 @@ from pathlib import Path
 
 import pytest
 
-from openjarvis.connectors._stubs import Document
-from openjarvis.connectors.pipeline import IngestionPipeline
-from openjarvis.connectors.store import KnowledgeStore
+from jarvis.connectors._stubs import Document
+from jarvis.connectors.pipeline import IngestionPipeline
+from jarvis.connectors.store import KnowledgeStore
 
 # ---------------------------------------------------------------------------
 # Helpers

@@ -1,0 +1,13 @@
+[package]
+name = "jarvis-mcp"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+jarvis-core = { path = "../jarvis-core" }
+jarvis-tools = { path = "../jarvis-tools" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tokio = { workspace = true }

@@ -6,10 +6,10 @@ from unittest.mock import call, patch
 
 import pytest
 
-from openjarvis.mcp.protocol import MCPRequest
-from openjarvis.mcp.server import MCPServer
-from openjarvis.tools.calculator import CalculatorTool
-from openjarvis.tools.think import ThinkTool
+from jarvis.mcp.protocol import MCPRequest
+from jarvis.mcp.server import MCPServer
+from jarvis.tools.calculator import CalculatorTool
+from jarvis.tools.think import ThinkTool
 
 
 @pytest.fixture
@@ -33,7 +33,7 @@ class TestServerTitle:
         resp = server.handle(req)
         server_info = resp.result["serverInfo"]
         assert "title" in server_info
-        assert server_info["title"] == "OpenJarvis Tool Server"
+        assert server_info["title"] == "Jarvis Tool Server"
 
 
 class TestListChanged:
@@ -65,7 +65,7 @@ class TestAnnotations:
 
 class TestAutoDiscovery:
     def test_auto_discovery_passes_allowed_dirs_to_all_file_writers(self):
-        from openjarvis.core.registry import ToolRegistry
+        from jarvis.core.registry import ToolRegistry
 
         with (
             patch.object(
@@ -132,7 +132,7 @@ class TestAutoDiscovery:
 
 class TestStorageToolAnnotations:
     def test_memory_store_destructive(self):
-        from openjarvis.tools.storage_tools import MemoryStoreTool
+        from jarvis.tools.storage_tools import MemoryStoreTool
 
         server = MCPServer([MemoryStoreTool()])
         req = MCPRequest(method="tools/list", id=1)
@@ -142,7 +142,7 @@ class TestStorageToolAnnotations:
         assert tool["annotations"]["readOnlyHint"] is False
 
     def test_memory_retrieve_read_only(self):
-        from openjarvis.tools.storage_tools import MemoryRetrieveTool
+        from jarvis.tools.storage_tools import MemoryRetrieveTool
 
         server = MCPServer([MemoryRetrieveTool()])
         req = MCPRequest(method="tools/list", id=1)

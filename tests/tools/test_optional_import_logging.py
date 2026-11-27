@@ -13,23 +13,23 @@ import pytest
     "package_name,target,message",
     [
         (
-            "openjarvis.tools",
-            "openjarvis.tools.calculator",
+            "jarvis.tools",
+            "jarvis.tools.calculator",
             "Optional tool calculator not loaded",
         ),
         (
-            "openjarvis.tools.storage",
-            "openjarvis.tools.storage.faiss_backend",
+            "jarvis.tools.storage",
+            "jarvis.tools.storage.faiss_backend",
             "Optional storage backend faiss_backend not loaded",
         ),
         (
-            "openjarvis.speech",
-            "openjarvis.speech.faster_whisper",
+            "jarvis.speech",
+            "jarvis.speech.faster_whisper",
             "Optional STT backend faster_whisper not loaded",
         ),
         (
-            "openjarvis.speech",
-            "openjarvis.speech.cartesia_tts",
+            "jarvis.speech",
+            "jarvis.speech.cartesia_tts",
             "Optional TTS backend cartesia_tts not loaded",
         ),
     ],
@@ -64,12 +64,12 @@ def test_package_initialization_logs_optional_import_failure(
 
 
 def test_optional_loader_does_not_swallow_programming_errors(monkeypatch):
-    import openjarvis.tools as package
+    import jarvis.tools as package
 
     original_import = importlib.import_module
 
     def broken_import(name, package=None):
-        if name == "openjarvis.tools.calculator":
+        if name == "jarvis.tools.calculator":
             raise RuntimeError("programming error")
         return original_import(name, package)
 

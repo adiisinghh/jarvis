@@ -14,8 +14,8 @@ from unittest.mock import call, patch
 import httpx
 import pytest
 
-from openjarvis.connectors._stubs import Document
-from openjarvis.core.registry import ConnectorRegistry
+from jarvis.connectors._stubs import Document
+from jarvis.core.registry import ConnectorRegistry
 
 # ---------------------------------------------------------------------------
 # Fake API payloads
@@ -54,7 +54,7 @@ _BLOCKS_RESPONSE = [
 @pytest.fixture()
 def connector(tmp_path: Path):
     """NotionConnector pointing at a tmp credentials path (no file yet)."""
-    from openjarvis.connectors.notion import NotionConnector  # noqa: PLC0415
+    from jarvis.connectors.notion import NotionConnector  # noqa: PLC0415
 
     creds_path = str(tmp_path / "notion.json")
     return NotionConnector(credentials_path=creds_path)
@@ -77,7 +77,7 @@ def test_not_connected_without_token(connector) -> None:
 
 def test_connected_with_token() -> None:
     """is_connected() returns True when a token is passed directly."""
-    from openjarvis.connectors.notion import NotionConnector  # noqa: PLC0415
+    from jarvis.connectors.notion import NotionConnector  # noqa: PLC0415
 
     conn = NotionConnector(token="ntn_fake")
     assert conn.is_connected() is True
@@ -99,8 +99,8 @@ def test_auth_url(connector) -> None:
 # ---------------------------------------------------------------------------
 
 
-@patch("openjarvis.connectors.notion._notion_api_search")
-@patch("openjarvis.connectors.notion._notion_api_get_blocks")
+@patch("jarvis.connectors.notion._notion_api_search")
+@patch("jarvis.connectors.notion._notion_api_get_blocks")
 def test_sync_yields_documents(
     mock_blocks,
     mock_search,
@@ -145,7 +145,7 @@ def test_sync_yields_documents(
 
 def test_render_blocks_to_markdown() -> None:
     """_render_blocks_to_markdown converts each block type to the correct markdown."""
-    from openjarvis.connectors.notion import _render_blocks_to_markdown  # noqa: PLC0415
+    from jarvis.connectors.notion import _render_blocks_to_markdown  # noqa: PLC0415
 
     blocks = [
         {
@@ -245,7 +245,7 @@ def test_mcp_tools(connector) -> None:
 
 def test_registry() -> None:
     """NotionConnector can be registered and retrieved via ConnectorRegistry."""
-    from openjarvis.connectors.notion import NotionConnector  # noqa: PLC0415
+    from jarvis.connectors.notion import NotionConnector  # noqa: PLC0415
 
     ConnectorRegistry.register_value("notion", NotionConnector)
     assert ConnectorRegistry.contains("notion")
@@ -260,7 +260,7 @@ def test_registry() -> None:
 
 def test_extract_page_title_database() -> None:
     """_extract_page_title extracts title from database objects correctly."""
-    from openjarvis.connectors.notion import _extract_page_title  # noqa: PLC0415
+    from jarvis.connectors.notion import _extract_page_title  # noqa: PLC0415
 
     db_obj = {
         "object": "database",
@@ -272,7 +272,7 @@ def test_extract_page_title_database() -> None:
 
 def test_extract_property_value() -> None:
     """_extract_property_value parses readable strings across Notion properties."""
-    from openjarvis.connectors.notion import _extract_property_value  # noqa: PLC0415
+    from jarvis.connectors.notion import _extract_property_value  # noqa: PLC0415
 
     assert (
         _extract_property_value({"type": "status", "status": {"name": "In progress"}})
@@ -303,7 +303,7 @@ def test_extract_property_value() -> None:
 
 def test_render_blocks_child_database_and_page() -> None:
     """_render_blocks_to_markdown renders child_database and child_page blocks."""
-    from openjarvis.connectors.notion import _render_blocks_to_markdown  # noqa: PLC0415
+    from jarvis.connectors.notion import _render_blocks_to_markdown  # noqa: PLC0415
 
     blocks = [
         {"type": "child_database", "child_database": {"title": "Tasks Tracker"}},
@@ -319,8 +319,8 @@ def test_render_blocks_child_database_and_page() -> None:
 # ---------------------------------------------------------------------------
 
 
-@patch("openjarvis.connectors.notion._notion_api_search")
-@patch("openjarvis.connectors.notion._notion_api_query_database")
+@patch("jarvis.connectors.notion._notion_api_search")
+@patch("jarvis.connectors.notion._notion_api_query_database")
 def test_sync_yields_database_document(
     mock_query_db,
     mock_search,
@@ -402,8 +402,8 @@ def _database_row(title, edited="2024-03-15T10:00:00.000Z"):
     }
 
 
-@patch("openjarvis.connectors.notion._notion_api_search")
-@patch("openjarvis.connectors.notion._notion_api_query_database")
+@patch("jarvis.connectors.notion._notion_api_search")
+@patch("jarvis.connectors.notion._notion_api_query_database")
 def test_database_rows_are_paginated(mock_query, mock_search, connector):
     Path(connector._credentials_path).write_text(
         '{"token":"ntn_fake"}', encoding="utf-8"
@@ -429,8 +429,8 @@ def test_database_rows_are_paginated(mock_query, mock_search, connector):
     ]
 
 
-@patch("openjarvis.connectors.notion._notion_api_search")
-@patch("openjarvis.connectors.notion._notion_api_query_database")
+@patch("jarvis.connectors.notion._notion_api_search")
+@patch("jarvis.connectors.notion._notion_api_query_database")
 def test_incremental_sync_refreshes_rows_under_an_old_database(
     mock_query, mock_search, connector
 ):
@@ -451,8 +451,8 @@ def test_incremental_sync_refreshes_rows_under_an_old_database(
     assert docs[0].timestamp == datetime(2026, 11, 14, 10, tzinfo=timezone.utc)
 
 
-@patch("openjarvis.connectors.notion._notion_api_search")
-@patch("openjarvis.connectors.notion._notion_api_query_database")
+@patch("jarvis.connectors.notion._notion_api_search")
+@patch("jarvis.connectors.notion._notion_api_query_database")
 def test_database_query_failure_is_not_reported_as_success(
     mock_query, mock_search, connector
 ):
@@ -471,8 +471,8 @@ def test_database_query_failure_is_not_reported_as_success(
 
 
 @pytest.mark.parametrize("cursor", [None, "", "repeat"])
-@patch("openjarvis.connectors.notion._notion_api_search")
-@patch("openjarvis.connectors.notion._notion_api_query_database")
+@patch("jarvis.connectors.notion._notion_api_search")
+@patch("jarvis.connectors.notion._notion_api_query_database")
 def test_invalid_database_pagination_stops(mock_query, mock_search, cursor, connector):
     Path(connector._credentials_path).write_text(
         '{"token":"ntn_fake"}', encoding="utf-8"
@@ -486,7 +486,7 @@ def test_invalid_database_pagination_stops(mock_query, mock_search, cursor, conn
 
 
 def test_http_database_query_uses_the_pinned_api_and_cursor(respx_mock):
-    from openjarvis.connectors.notion import _notion_api_query_database
+    from jarvis.connectors.notion import _notion_api_query_database
 
     route = respx_mock.post("https://api.notion.com/v1/databases/db1/query").respond(
         200, json={"results": [], "has_more": False}
@@ -503,7 +503,7 @@ def test_http_database_query_uses_the_pinned_api_and_cursor(respx_mock):
 
 
 def test_http_search_does_not_filter_out_databases(respx_mock):
-    from openjarvis.connectors.notion import _notion_api_search
+    from jarvis.connectors.notion import _notion_api_search
 
     route = respx_mock.post("https://api.notion.com/v1/search").respond(
         200, json={"results": [], "has_more": False}

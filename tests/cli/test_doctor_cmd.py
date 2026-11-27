@@ -10,8 +10,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from click.testing import CliRunner
 
-from openjarvis.cli import cli
-from openjarvis.cli.doctor_cmd import (
+from jarvis.cli import cli
+from jarvis.cli.doctor_cmd import (
     CheckResult,
     _check_config_exists,
     _check_default_model,
@@ -20,8 +20,8 @@ from openjarvis.cli.doctor_cmd import (
     _check_speech_backend,
     _run_all_checks,
 )
-from openjarvis.core.config import JarvisConfig
-from openjarvis.core.registry import EngineRegistry
+from jarvis.core.config import JarvisConfig
+from jarvis.core.registry import EngineRegistry
 
 
 class TestDoctorHelp:
@@ -39,15 +39,15 @@ class TestDoctorRuns:
         mock_config.intelligence.default_model = ""
 
         with (
-            patch("openjarvis.cli.doctor_cmd.load_config", return_value=mock_config),
+            patch("jarvis.cli.doctor_cmd.load_config", return_value=mock_config),
             patch(
-                "openjarvis.cli.doctor_cmd.DEFAULT_CONFIG_PATH",
+                "jarvis.cli.doctor_cmd.DEFAULT_CONFIG_PATH",
                 Path("/tmp/nonexistent/config.toml"),
             ),
-            patch("openjarvis.cli.doctor_cmd._check_engines", return_value=[]),
-            patch("openjarvis.cli.doctor_cmd._check_models", return_value=[]),
+            patch("jarvis.cli.doctor_cmd._check_engines", return_value=[]),
+            patch("jarvis.cli.doctor_cmd._check_models", return_value=[]),
             patch(
-                "openjarvis.cli.doctor_cmd._check_speech_backend",
+                "jarvis.cli.doctor_cmd._check_speech_backend",
                 return_value=CheckResult("Speech backend", "ok", "mock ready"),
             ),
         ):
@@ -63,15 +63,15 @@ class TestDoctorJsonOutput:
         mock_config.intelligence.default_model = ""
 
         with (
-            patch("openjarvis.cli.doctor_cmd.load_config", return_value=mock_config),
+            patch("jarvis.cli.doctor_cmd.load_config", return_value=mock_config),
             patch(
-                "openjarvis.cli.doctor_cmd.DEFAULT_CONFIG_PATH",
+                "jarvis.cli.doctor_cmd.DEFAULT_CONFIG_PATH",
                 Path("/tmp/nonexistent/config.toml"),
             ),
-            patch("openjarvis.cli.doctor_cmd._check_engines", return_value=[]),
-            patch("openjarvis.cli.doctor_cmd._check_models", return_value=[]),
+            patch("jarvis.cli.doctor_cmd._check_engines", return_value=[]),
+            patch("jarvis.cli.doctor_cmd._check_models", return_value=[]),
             patch(
-                "openjarvis.cli.doctor_cmd._check_speech_backend",
+                "jarvis.cli.doctor_cmd._check_speech_backend",
                 return_value=CheckResult("Speech backend", "ok", "mock ready"),
             ),
         ):
@@ -100,7 +100,7 @@ class TestCheckPythonVersion:
     )
     def test_supported_range(self, major, minor, status):
         with patch(
-            "openjarvis.cli.doctor_cmd.sys.version_info",
+            "jarvis.cli.doctor_cmd.sys.version_info",
             SimpleNamespace(major=major, minor=minor, micro=0),
         ):
             assert _check_python_version().status == status
@@ -116,7 +116,7 @@ class TestCheckConfigMissing:
     def test_check_config_missing(self) -> None:
         """Warning when config file does not exist."""
         with patch(
-            "openjarvis.cli.doctor_cmd.DEFAULT_CONFIG_PATH",
+            "jarvis.cli.doctor_cmd.DEFAULT_CONFIG_PATH",
             Path("/tmp/nonexistent/config.toml"),
         ):
             result = _check_config_exists()
@@ -127,7 +127,7 @@ class TestCheckConfigMissing:
 class TestCheckEngineProbing:
     def test_check_engine_probing(self) -> None:
         """Engine health check reports reachable/unreachable engines."""
-        from openjarvis.cli.doctor_cmd import CheckResult
+        from jarvis.cli.doctor_cmd import CheckResult
 
         mock_engine_healthy = MagicMock()
         mock_engine_healthy.health.return_value = True
@@ -186,24 +186,24 @@ class TestCheckEngineProbing:
 
         ok = CheckResult("other", "ok", "ok")
         with (
-            patch("openjarvis.cli.doctor_cmd._ensure_engines_imported"),
-            patch("openjarvis.cli.doctor_cmd._get_config", return_value=config),
-            patch("openjarvis.cli.doctor_cmd.load_config", return_value=config),
+            patch("jarvis.cli.doctor_cmd._ensure_engines_imported"),
+            patch("jarvis.cli.doctor_cmd._get_config", return_value=config),
+            patch("jarvis.cli.doctor_cmd.load_config", return_value=config),
             patch(
-                "openjarvis.core.registry.EngineRegistry.keys",
+                "jarvis.core.registry.EngineRegistry.keys",
                 return_value=["beta", "alpha"],
             ),
             patch(
-                "openjarvis.engine._discovery._make_engine",
+                "jarvis.engine._discovery._make_engine",
                 side_effect=make_engine,
             ) as make,
-            patch("openjarvis.cli.doctor_cmd._check_python_version", return_value=ok),
-            patch("openjarvis.cli.doctor_cmd._check_config_exists", return_value=ok),
-            patch("openjarvis.cli.doctor_cmd._check_config_parses", return_value=ok),
-            patch("openjarvis.cli.doctor_cmd._check_optional_deps", return_value=[]),
-            patch("openjarvis.cli.doctor_cmd._check_speech_backend", return_value=ok),
-            patch("openjarvis.cli.doctor_cmd._check_nodejs", return_value=ok),
-            patch("openjarvis.cli.doctor_cmd._check_security_profile", return_value=ok),
+            patch("jarvis.cli.doctor_cmd._check_python_version", return_value=ok),
+            patch("jarvis.cli.doctor_cmd._check_config_exists", return_value=ok),
+            patch("jarvis.cli.doctor_cmd._check_config_parses", return_value=ok),
+            patch("jarvis.cli.doctor_cmd._check_optional_deps", return_value=[]),
+            patch("jarvis.cli.doctor_cmd._check_speech_backend", return_value=ok),
+            patch("jarvis.cli.doctor_cmd._check_nodejs", return_value=ok),
+            patch("jarvis.cli.doctor_cmd._check_security_profile", return_value=ok),
         ):
             results = _run_all_checks()
 
@@ -223,7 +223,7 @@ class TestCheckDefaultModel:
         """Leaving default model empty should be treated as valid auto-routing."""
         mock_config = MagicMock()
         mock_config.intelligence.default_model = ""
-        with patch("openjarvis.cli.doctor_cmd.load_config", return_value=mock_config):
+        with patch("jarvis.cli.doctor_cmd.load_config", return_value=mock_config):
             result = _check_default_model()
         assert result.status == "ok"
         assert "auto" in result.message.lower()
@@ -242,11 +242,11 @@ class TestCheckDefaultModel:
         mock_engine.list_models.return_value = ["mlx-community/Qwen3.5-4B-OptiQ-4bit"]
 
         with (
-            patch("openjarvis.cli.doctor_cmd.load_config", return_value=mock_config),
-            patch("openjarvis.cli.doctor_cmd._ensure_engines_imported"),
+            patch("jarvis.cli.doctor_cmd.load_config", return_value=mock_config),
+            patch("jarvis.cli.doctor_cmd._ensure_engines_imported"),
             patch.object(EngineRegistry, "keys", return_value=["mlx"]),
             patch(
-                "openjarvis.engine._discovery._make_engine",
+                "jarvis.engine._discovery._make_engine",
                 return_value=mock_engine,
             ),
         ):
@@ -264,7 +264,7 @@ class TestCheckSpeechBackend:
         backend.health.return_value = True
 
         with patch(
-            "openjarvis.speech._discovery.get_speech_backend",
+            "jarvis.speech._discovery.get_speech_backend",
             return_value=backend,
         ):
             result = _check_speech_backend()
@@ -279,7 +279,7 @@ class TestCheckSpeechBackend:
         backend.last_error.return_value = "missing cublas64_12.dll"
 
         with patch(
-            "openjarvis.speech._discovery.get_speech_backend",
+            "jarvis.speech._discovery.get_speech_backend",
             return_value=backend,
         ):
             result = _check_speech_backend()
@@ -290,7 +290,7 @@ class TestCheckSpeechBackend:
 
     def test_check_speech_backend_missing_uses_desktop_hint(self) -> None:
         with patch(
-            "openjarvis.speech._discovery.get_speech_backend",
+            "jarvis.speech._discovery.get_speech_backend",
             return_value=None,
         ):
             result = _check_speech_backend()
@@ -341,7 +341,7 @@ class TestCheckNodejs:
     ],
 )
 def test_doctor_skips_off_device_clients_before_construction(host, cloud, should_probe):
-    from openjarvis.cli.doctor_cmd import _check_models, _probe_engines
+    from jarvis.cli.doctor_cmd import _check_models, _probe_engines
 
     constructed = []
     health = MagicMock(return_value=True)
@@ -363,7 +363,7 @@ def test_doctor_skips_off_device_clients_before_construction(host, cloud, should
             return models()
 
     EngineRegistry.register_value("test-endpoint", Engine)
-    with patch("openjarvis.cli.doctor_cmd._ensure_engines_imported"):
+    with patch("jarvis.cli.doctor_cmd._ensure_engines_imported"):
         probes = _probe_engines(JarvisConfig())
     _check_models(probes)
     assert probes["test-endpoint"].skipped is (not should_probe)
@@ -374,7 +374,7 @@ def test_doctor_skips_off_device_clients_before_construction(host, cloud, should
 
 @pytest.mark.parametrize("probe_remote", [False, True])
 def test_remote_opt_in_and_cli_flag(probe_remote):
-    from openjarvis.cli.doctor_cmd import _probe_engines
+    from jarvis.cli.doctor_cmd import _probe_engines
 
     cls = type("CloudEngine", (), {"engine_id": "cloud", "is_cloud": True})
     EngineRegistry.register_value("cloud", cls)
@@ -384,14 +384,14 @@ def test_remote_opt_in_and_cli_flag(probe_remote):
     engine.is_cloud = True
     engine.health.return_value = True
     with (
-        patch("openjarvis.cli.doctor_cmd._ensure_engines_imported"),
-        patch("openjarvis.engine._discovery._make_engine", return_value=engine) as make,
+        patch("jarvis.cli.doctor_cmd._ensure_engines_imported"),
+        patch("jarvis.engine._discovery._make_engine", return_value=engine) as make,
     ):
         probes = _probe_engines(JarvisConfig(), probe_remote=probe_remote)
     assert make.call_count == int(probe_remote)
     assert engine.health.call_count == int(probe_remote)
     assert probes["cloud"].skipped is (not probe_remote)
-    with patch("openjarvis.cli.doctor_cmd._run_all_checks", return_value=[]) as checks:
+    with patch("jarvis.cli.doctor_cmd._run_all_checks", return_value=[]) as checks:
         args = ["doctor", "--json"] + (["--probe-remote"] if probe_remote else [])
         result = CliRunner().invoke(cli, args)
         assert result.exit_code == 0
@@ -399,12 +399,12 @@ def test_remote_opt_in_and_cli_flag(probe_remote):
 
 
 def test_default_model_on_skipped_engine_is_unchecked_not_missing():
-    from openjarvis.cli.doctor_cmd import _EngineProbe
+    from jarvis.cli.doctor_cmd import _EngineProbe
 
     config = JarvisConfig()
     config.engine.default = "nim"
     config.intelligence.default_model = "vendor/model"
-    with patch("openjarvis.cli.doctor_cmd.load_config", return_value=config):
+    with patch("jarvis.cli.doctor_cmd.load_config", return_value=config):
         result = _check_default_model({"nim": _EngineProbe(None, False, skipped=True)})
     assert result.status == "info"
     assert "--probe-remote" in result.message
@@ -415,31 +415,31 @@ def test_default_model_on_skipped_engine_is_unchecked_not_missing():
     "env_host", ["https://api.example.com", "http://localhost:8000"]
 )
 def test_nim_environment_host_controls_preflight(monkeypatch, env_host):
-    from openjarvis.cli.doctor_cmd import _probe_engines
-    from openjarvis.engine.nim import NIMEngine
+    from jarvis.cli.doctor_cmd import _probe_engines
+    from jarvis.engine.nim import NIMEngine
 
     monkeypatch.setenv("NIM_HOST", env_host)
     EngineRegistry.register_value("nim", NIMEngine)
     engine = MagicMock()
     engine._host = env_host
     with (
-        patch("openjarvis.cli.doctor_cmd._ensure_engines_imported"),
-        patch("openjarvis.engine._discovery._make_engine", return_value=engine) as make,
+        patch("jarvis.cli.doctor_cmd._ensure_engines_imported"),
+        patch("jarvis.engine._discovery._make_engine", return_value=engine) as make,
     ):
         _probe_engines(JarvisConfig())
     assert make.call_count == int("localhost" in env_host)
 
 
 def test_actual_endpoint_is_checked_again_and_errors_do_not_expose_secrets():
-    from openjarvis.cli.doctor_cmd import _check_engines, _probe_engines
+    from jarvis.cli.doctor_cmd import _check_engines, _probe_engines
 
     cls = type("Engine", (), {"engine_id": "test", "is_cloud": False})
     EngineRegistry.register_value("test", cls)
     engine = MagicMock()
     engine._host = "https://remote.example.com"
     with (
-        patch("openjarvis.cli.doctor_cmd._ensure_engines_imported"),
-        patch("openjarvis.engine._discovery._make_engine", return_value=engine),
+        patch("jarvis.cli.doctor_cmd._ensure_engines_imported"),
+        patch("jarvis.engine._discovery._make_engine", return_value=engine),
     ):
         probes = _probe_engines(JarvisConfig())
         assert probes["test"].skipped is True
@@ -454,7 +454,7 @@ def test_actual_endpoint_is_checked_again_and_errors_do_not_expose_secrets():
 
 
 def test_unreadable_host_is_not_assumed_local():
-    from openjarvis.cli.doctor_cmd import _is_local_endpoint
+    from jarvis.cli.doctor_cmd import _is_local_endpoint
 
     class Engine:
         @property

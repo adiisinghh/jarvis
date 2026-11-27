@@ -1,7 +1,7 @@
 """``jarvis init --preset`` must find presets in installed wheels and checkouts.
 
-The presets are not part of the ``openjarvis`` package in the source tree, so
-the wheel bundles a copy at ``openjarvis/presets/``. Before that, an installed
+The presets are not part of the ``jarvis`` package in the source tree, so
+the wheel bundles a copy at ``jarvis/presets/``. Before that, an installed
 ``jarvis init --preset <name>`` always failed with "Preset not found" because
 the lookup only knew the source-tree location.
 """
@@ -15,7 +15,7 @@ import click
 import pytest
 from click.testing import CliRunner
 
-from openjarvis.cli import _presets, cli
+from jarvis.cli import _presets, cli
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -94,11 +94,11 @@ def test_init_lists_every_search_path_when_preset_is_missing(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     _redirect(monkeypatch, tmp_path / "pkg", tmp_path / "src")
-    config_dir = tmp_path / ".openjarvis"
+    config_dir = tmp_path / ".jarvis"
     with (
-        mock.patch("openjarvis.cli.init_cmd.DEFAULT_CONFIG_DIR", config_dir),
+        mock.patch("jarvis.cli.init_cmd.DEFAULT_CONFIG_DIR", config_dir),
         mock.patch(
-            "openjarvis.cli.init_cmd.DEFAULT_CONFIG_PATH", config_dir / "config.toml"
+            "jarvis.cli.init_cmd.DEFAULT_CONFIG_PATH", config_dir / "config.toml"
         ),
     ):
         result = CliRunner().invoke(cli, ["init", "--preset", "chat-simple"])
@@ -125,4 +125,4 @@ def test_wheel_bundles_presets_inside_the_package() -> None:
     data = tomllib.loads(pyproject.read_text(encoding="utf-8"))
     force_include = data["tool"]["hatch"]["build"]["targets"]["wheel"]["force-include"]
 
-    assert force_include.get("configs/openjarvis/examples") == "openjarvis/presets"
+    assert force_include.get("configs/jarvis/examples") == "jarvis/presets"

@@ -7,10 +7,10 @@ from unittest import mock
 
 import pytest
 
-from openjarvis.core.registry import EngineRegistry
-from openjarvis.core.types import Message, Role
-from openjarvis.engine._base import EngineConnectionError
-from openjarvis.engine.cloud import (
+from jarvis.core.registry import EngineRegistry
+from jarvis.core.types import Message, Role
+from jarvis.engine._base import EngineConnectionError
+from jarvis.engine.cloud import (
     CloudEngine,
     _is_codex_model,
     _is_deepseek_model,
@@ -289,7 +289,7 @@ class TestOpenAIUnsupportedTemperatureRetry:
         assert "temperature" not in calls[1]
 
     def test_is_unsupported_temperature_error_variations(self) -> None:
-        from openjarvis.engine.cloud import _is_unsupported_temperature_error
+        from jarvis.engine.cloud import _is_unsupported_temperature_error
 
         # Standard OpenAI 400 (#426)
         assert _is_unsupported_temperature_error(
@@ -573,7 +573,7 @@ class TestCodexGenerate:
         }
 
         with mock.patch(
-            "openjarvis.engine.cloud.httpx.post",
+            "jarvis.engine.cloud.httpx.post",
             return_value=fake_response,
         ) as mock_post:
             result = engine.generate(
@@ -620,7 +620,7 @@ class TestCodexGenerate:
         }
 
         with mock.patch(
-            "openjarvis.engine.cloud.httpx.post",
+            "jarvis.engine.cloud.httpx.post",
             return_value=fake_response,
         ):
             result = engine.generate(
@@ -649,7 +649,7 @@ class TestCodexGenerate:
         }
 
         with mock.patch(
-            "openjarvis.engine.cloud.httpx.post",
+            "jarvis.engine.cloud.httpx.post",
             return_value=fake_response,
         ) as mock_post:
             engine.generate(
@@ -809,8 +809,8 @@ class TestOpenAICompatGatewayToolCallShape:
         ],
     )
     def test_agent_executes_gateway_tool_call(self, monkeypatch, model, client_attr):
-        from openjarvis.agents.orchestrator import OrchestratorAgent
-        from openjarvis.tools.calculator import CalculatorTool
+        from jarvis.agents.orchestrator import OrchestratorAgent
+        from jarvis.tools.calculator import CalculatorTool
 
         for var in CLOUD_KEY_ENV_VARS:
             monkeypatch.delenv(var, raising=False)

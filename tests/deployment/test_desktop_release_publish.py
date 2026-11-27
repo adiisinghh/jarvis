@@ -58,7 +58,7 @@ def test_download_aliases_copy_the_verified_versioned_files(tmp_path):
             **os.environ,
             "PATH": f"{tmp_path}{os.pathsep}{os.environ['PATH']}",
             "STABLE_TAG": "desktop-v1.0.5",
-            "GITHUB_REPOSITORY": "open-jarvis/OpenJarvis",
+            "GITHUB_REPOSITORY": "jarvis/Jarvis",
             "RUNNER_TEMP": str(tmp_path / "runner temp"),
             "UPLOAD_LOG": str(log),
         },
@@ -69,10 +69,10 @@ def test_download_aliases_copy_the_verified_versioned_files(tmp_path):
     assert result.returncode == 0, result.stderr
     uploads = dict(json.loads(line) for line in log.read_text().splitlines())
     assert uploads == {
-        "OpenJarvis_universal.dmg": "OpenJarvis_1.0.5_universal.dmg",
-        "OpenJarvis_x64-setup.exe": "OpenJarvis_1.0.5_x64-setup.exe",
-        "OpenJarvis_arm64-setup.exe": "OpenJarvis_1.0.5_arm64-setup.exe",
-        "OpenJarvis_amd64.deb": "OpenJarvis_1.0.5_amd64.deb",
-        "OpenJarvis_x86_64.rpm": "OpenJarvis-1.0.5-1.x86_64.rpm",
-        "OpenJarvis_amd64.AppImage": "OpenJarvis_1.0.5_amd64.AppImage",
+        "Jarvis_universal.dmg": "Jarvis_1.0.5_universal.dmg",
+        "Jarvis_x64-setup.exe": "Jarvis_1.0.5_x64-setup.exe",
+        "Jarvis_arm64-setup.exe": "Jarvis_1.0.5_arm64-setup.exe",
+        "Jarvis_amd64.deb": "Jarvis_1.0.5_amd64.deb",
+        "Jarvis_x86_64.rpm": "Jarvis-1.0.5-1.x86_64.rpm",
+        "Jarvis_amd64.AppImage": "Jarvis_1.0.5_amd64.AppImage",
     }

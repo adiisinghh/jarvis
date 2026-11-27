@@ -17,12 +17,12 @@ try:
 except ImportError:
     HAS_FASTAPI = False
 
-from openjarvis.connectors.store import KnowledgeStore
-from openjarvis.core.events import EventBus
-from openjarvis.core.registry import ToolRegistry
-from openjarvis.core.types import Role, ToolResult
-from openjarvis.security.capabilities import CapabilityPolicy
-from openjarvis.tools._stubs import BaseTool, ToolSpec
+from jarvis.connectors.store import KnowledgeStore
+from jarvis.core.events import EventBus
+from jarvis.core.registry import ToolRegistry
+from jarvis.core.types import Role, ToolResult
+from jarvis.security.capabilities import CapabilityPolicy
+from jarvis.tools._stubs import BaseTool, ToolSpec
 
 
 class _ConfiguredResearchProbe(BaseTool):
@@ -115,7 +115,7 @@ def test_deep_research_agent_gets_tools(tmp_path: Path) -> None:
     store = KnowledgeStore(str(db_path))
     store.store("test content", source="test", doc_type="note")
 
-    from openjarvis.server.agent_manager_routes import _build_deep_research_tools
+    from jarvis.server.agent_manager_routes import _build_deep_research_tools
 
     tools = _build_deep_research_tools(
         engine=MagicMock(),
@@ -135,7 +135,7 @@ def test_deep_research_agent_gets_tools(tmp_path: Path) -> None:
 @pytest.mark.skipif(not HAS_FASTAPI, reason="fastapi not installed")
 def test_deep_research_tools_returns_empty_when_no_db() -> None:
     """When knowledge.db doesn't exist, returns empty list."""
-    from openjarvis.server.agent_manager_routes import _build_deep_research_tools
+    from jarvis.server.agent_manager_routes import _build_deep_research_tools
 
     tools = _build_deep_research_tools(
         engine=MagicMock(),
@@ -161,7 +161,7 @@ async def test_server_deep_research_merges_and_executes_all_tool_sources(
 ) -> None:
     """Configured and MCP tools reach Deep Research with or without its DB."""
 
-    from openjarvis.server import agent_manager_routes as routes
+    from jarvis.server import agent_manager_routes as routes
 
     start_worker = MagicMock(wraps=routes._start_managed_worker)
     monkeypatch.setattr(routes, "_start_managed_worker", start_worker)
@@ -297,9 +297,9 @@ async def test_disconnected_research_stream_keeps_tick_until_worker_finishes(
     import asyncio
     import threading
 
-    from openjarvis.agents._stubs import AgentResult
-    from openjarvis.agents.manager import AgentManager
-    from openjarvis.server import agent_manager_routes as routes
+    from jarvis.agents._stubs import AgentResult
+    from jarvis.agents.manager import AgentManager
+    from jarvis.server import agent_manager_routes as routes
 
     started = threading.Event()
     release = threading.Event()
@@ -319,7 +319,7 @@ async def test_disconnected_research_stream_keeps_tick_until_worker_finishes(
 
     monkeypatch.setattr(routes, "resolve_agent_tools", lambda *args, **kwargs: toolkit)
     monkeypatch.setattr(
-        "openjarvis.agents.deep_research.DeepResearchAgent",
+        "jarvis.agents.deep_research.DeepResearchAgent",
         BlockedResearchAgent,
     )
     manager = AgentManager(str(tmp_path / "agents.db"))

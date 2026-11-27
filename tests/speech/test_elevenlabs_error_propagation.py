@@ -11,8 +11,8 @@ from unittest.mock import Mock
 import httpx
 import pytest
 
-from openjarvis.speech import elevenlabs_tts
-from openjarvis.speech.elevenlabs_tts import ElevenLabsTTSBackend
+from jarvis.speech import elevenlabs_tts
+from jarvis.speech.elevenlabs_tts import ElevenLabsTTSBackend
 
 _KEY = "sk_review_" + "credential_sentinel_" * 3
 
@@ -21,14 +21,14 @@ _KEY = "sk_review_" + "credential_sentinel_" * 3
 def test_tool_events_and_persisted_trace_keep_credentials_private(
     monkeypatch, tmp_path, caplog, error_type
 ):
-    from openjarvis.agents._stubs import AgentResult
-    from openjarvis.core.events import EventBus, EventType
-    from openjarvis.core.registry import TTSRegistry
-    from openjarvis.core.types import StepType, ToolCall
-    from openjarvis.tools._stubs import ToolExecutor
-    from openjarvis.tools.text_to_speech import TextToSpeechTool
-    from openjarvis.traces.collector import TraceCollector
-    from openjarvis.traces.store import TraceStore
+    from jarvis.agents._stubs import AgentResult
+    from jarvis.core.events import EventBus, EventType
+    from jarvis.core.registry import TTSRegistry
+    from jarvis.core.types import StepType, ToolCall
+    from jarvis.tools._stubs import ToolExecutor
+    from jarvis.tools.text_to_speech import TextToSpeechTool
+    from jarvis.traces.collector import TraceCollector
+    from jarvis.traces.store import TraceStore
 
     monkeypatch.setenv("ELEVENLABS_API_KEY", _KEY)
     TTSRegistry.register_value("elevenlabs", ElevenLabsTTSBackend)

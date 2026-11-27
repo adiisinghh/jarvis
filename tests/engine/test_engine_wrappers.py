@@ -8,12 +8,12 @@ from typing import Any, Dict, List
 
 import pytest
 
-from openjarvis.core.events import EventBus
-from openjarvis.core.types import Message, Role
-from openjarvis.engine._stubs import InferenceEngine, StreamChunk
-from openjarvis.engine.multi import MultiEngine
-from openjarvis.security.guardrails import GuardrailsEngine
-from openjarvis.telemetry.instrumented_engine import InstrumentedEngine
+from jarvis.core.events import EventBus
+from jarvis.core.types import Message, Role
+from jarvis.engine._stubs import InferenceEngine, StreamChunk
+from jarvis.engine.multi import MultiEngine
+from jarvis.security.guardrails import GuardrailsEngine
+from jarvis.telemetry.instrumented_engine import InstrumentedEngine
 
 
 def test_multi_engine_preserves_known_owner_when_discovery_fails(monkeypatch):

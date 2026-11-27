@@ -2,34 +2,34 @@
 
 setup() {
     TEST_TMPDIR=$(mktemp -d)
-    export OPENJARVIS_HOME="$TEST_TMPDIR/.openjarvis"
-    mkdir -p "$OPENJARVIS_HOME/.state/models"
-    mkdir -p "$OPENJARVIS_HOME/.scripts"
+    export JARVIS_HOME="$TEST_TMPDIR/.jarvis"
+    mkdir -p "$JARVIS_HOME/.state/models"
+    mkdir -p "$JARVIS_HOME/.scripts"
     # Provide mock scripts that all return success and write the expected state files.
-    cat > "$OPENJARVIS_HOME/.scripts/install-rust.sh" <<EOF
+    cat > "$JARVIS_HOME/.scripts/install-rust.sh" <<EOF
 #!/usr/bin/env bash
 exit 0
 EOF
-    cat > "$OPENJARVIS_HOME/.scripts/build-extension.sh" <<EOF
+    cat > "$JARVIS_HOME/.scripts/build-extension.sh" <<EOF
 #!/usr/bin/env bash
-touch "\$OPENJARVIS_HOME/.state/extension-built"
+touch "\$JARVIS_HOME/.state/extension-built"
 exit 0
 EOF
-    cat > "$OPENJARVIS_HOME/.scripts/pull-model.sh" <<EOF
+    cat > "$JARVIS_HOME/.scripts/pull-model.sh" <<EOF
 #!/usr/bin/env bash
 key=\$(printf '%s' "\$1" | (command -v sha256sum >/dev/null && sha256sum || shasum -a 256) | cut -d ' ' -f 1)
-mkdir -p "\$OPENJARVIS_HOME/.state/models/v1"
-printf '%s\\n' "\$1" > "\$OPENJARVIS_HOME/.state/models/v1/\${key}.ready"
+mkdir -p "\$JARVIS_HOME/.state/models/v1"
+printf '%s\\n' "\$1" > "\$JARVIS_HOME/.state/models/v1/\${key}.ready"
 exit 0
 EOF
-    chmod +x "$OPENJARVIS_HOME/.scripts/"*.sh
+    chmod +x "$JARVIS_HOME/.scripts/"*.sh
     export SCRIPT="$BATS_TEST_DIRNAME/../../../scripts/install/bg-orchestrator.sh"
 }
 
 model_marker() {
     local model_id="$1" state="$2" key
     key=$(printf '%s' "$model_id" | (command -v sha256sum >/dev/null && sha256sum || shasum -a 256) | cut -d ' ' -f 1)
-    printf '%s/.state/models/v1/%s.%s' "$OPENJARVIS_HOME" "$key" "$state"
+    printf '%s/.state/models/v1/%s.%s' "$JARVIS_HOME" "$key" "$state"
 }
 
 teardown() {
@@ -41,14 +41,14 @@ teardown() {
     [ "$status" -eq 0 ]
     # bg-orchestrator's pid file is removed by the trap on exit.
     # We verify the file existed at SOME point by checking for the log mention.
-    [ -f "$OPENJARVIS_HOME/.state/bg-orchestrator.log" ]
-    grep -q "pid=" "$OPENJARVIS_HOME/.state/bg-orchestrator.log"
+    [ -f "$JARVIS_HOME/.state/bg-orchestrator.log" ]
+    grep -q "pid=" "$JARVIS_HOME/.state/bg-orchestrator.log"
 }
 
 @test "invokes build-extension after install-rust succeeds" {
     run bash "$SCRIPT" qwen3.5:9b
     [ "$status" -eq 0 ]
-    [ -f "$OPENJARVIS_HOME/.state/extension-built" ]
+    [ -f "$JARVIS_HOME/.state/extension-built" ]
 }
 
 @test "invokes pull-model.sh for each model arg" {
@@ -61,5 +61,5 @@ teardown() {
 @test "removes pid file when done (via trap)" {
     run bash "$SCRIPT" qwen3.5:9b
     [ "$status" -eq 0 ]
-    [ ! -f "$OPENJARVIS_HOME/.state/bg.pid" ]
+    [ ! -f "$JARVIS_HOME/.state/bg.pid" ]
 }

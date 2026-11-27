@@ -1,7 +1,7 @@
 # macOS Install
 
 ```bash
-curl -fsSL https://open-jarvis.github.io/OpenJarvis/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/adiisinghh/jarvis/main/scripts/install/install.sh | bash
 ```
 
 Works on Intel and Apple Silicon. The installer auto-detects your CPU/GPU.

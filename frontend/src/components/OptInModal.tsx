@@ -204,7 +204,7 @@ export function OptInModal({ onClose }: OptInModalProps) {
             Your name and savings are public; email is not displayed.
           </p>
           <a
-            href="https://open-jarvis.github.io/OpenJarvis/telemetry/"
+            href="https://github.com/adiisinghh/jarvis/blob/main/docs/telemetry.md"
             target="_blank"
             rel="noreferrer"
             className="inline-block underline mt-1"

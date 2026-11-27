@@ -15,11 +15,11 @@ except ImportError:  # respx is an optional test-only dep; MockTransport tests
     respx = None  # type: ignore[assignment]  # still run without it.
     _HAS_RESPX = False
 
-from openjarvis.core.registry import EngineRegistry
-from openjarvis.core.types import Message, Role
-from openjarvis.engine._base import EngineConnectionError
-from openjarvis.engine._openai_compat import EngineContextLengthError
-from openjarvis.engine.openai_compat_engines import MLXEngine, VLLMEngine
+from jarvis.core.registry import EngineRegistry
+from jarvis.core.types import Message, Role
+from jarvis.engine._base import EngineConnectionError
+from jarvis.engine._openai_compat import EngineContextLengthError
+from jarvis.engine.openai_compat_engines import MLXEngine, VLLMEngine
 
 # respx-backed tests exercise the SYNC client paths (generate/list_models/health)
 # and skip cleanly when respx is absent; the async stream/timeout/disconnect tests

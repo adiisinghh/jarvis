@@ -17,8 +17,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from openjarvis.core import get_python_executable
-from openjarvis.tools.shell_exec import ShellExecTool
+from jarvis.core import get_python_executable
+from jarvis.tools.shell_exec import ShellExecTool
 
 
 def _rust_output(stdout: str = "", stderr: str = "", code: int = 0) -> str:
@@ -50,10 +50,10 @@ def _python_cmd(code: str) -> str:
 
 class TestShellExecTool:
     def test_registered_via_tools_package_import(self):
-        import openjarvis.tools as tools_pkg
-        from openjarvis.core.registry import ToolRegistry
+        import jarvis.tools as tools_pkg
+        from jarvis.core.registry import ToolRegistry
 
-        sys.modules.pop("openjarvis.tools.shell_exec", None)
+        sys.modules.pop("jarvis.tools.shell_exec", None)
         importlib.reload(tools_pkg)
 
         assert ToolRegistry.contains("shell_exec")
@@ -155,14 +155,14 @@ class TestShellExecTool:
     def test_env_clearing(self):
         """Verify that arbitrary env vars are NOT passed through, also when
         the Rust extension is installed (it inherits the full env)."""
-        marker = "OPENJARVIS_TEST_SECRET_12345"
+        marker = "JARVIS_TEST_SECRET_12345"
         os.environ[marker] = "leaked"
         # what the Rust path printed for the same command before #1332
         mock_mod = _make_mock_rust(return_value=_rust_output(stdout="leaked\n"))
         try:
             tool = ShellExecTool()
             with patch(
-                "openjarvis._rust_bridge.get_rust_module",
+                "jarvis._rust_bridge.get_rust_module",
                 return_value=mock_mod,
             ):
                 result = tool.execute(
@@ -177,7 +177,7 @@ class TestShellExecTool:
 
     def test_env_passthrough(self):
         """Verify that explicitly listed env vars ARE passed through."""
-        marker = "OPENJARVIS_TEST_PASSTHROUGH_67890"
+        marker = "JARVIS_TEST_PASSTHROUGH_67890"
         os.environ[marker] = "allowed_value"
         try:
             tool = ShellExecTool()
@@ -205,7 +205,7 @@ class TestShellExecTool:
         )
         tool = ShellExecTool()
         with patch(
-            "openjarvis._rust_bridge.get_rust_module",
+            "jarvis._rust_bridge.get_rust_module",
             return_value=mock_mod,
         ):
             result = tool.execute(command="exit 42")
@@ -254,7 +254,7 @@ class TestSanitizedEnvWindowsKeys:
     """
 
     def test_base_env_keys_include_windows_essentials(self):
-        from openjarvis.tools.shell_exec import _WINDOWS_ENV_KEYS
+        from jarvis.tools.shell_exec import _WINDOWS_ENV_KEYS
 
         for key in (
             "SystemRoot",
@@ -270,7 +270,7 @@ class TestSanitizedEnvWindowsKeys:
             assert key in _WINDOWS_ENV_KEYS, f"{key} missing from Windows keys"
 
     def test_windows_keys_are_only_enabled_on_windows(self):
-        from openjarvis.tools.shell_exec import _BASE_ENV_KEYS, _WINDOWS_ENV_KEYS
+        from jarvis.tools.shell_exec import _BASE_ENV_KEYS, _WINDOWS_ENV_KEYS
 
         if os.name == "nt":
             assert set(_WINDOWS_ENV_KEYS) <= set(_BASE_ENV_KEYS)
@@ -317,7 +317,7 @@ class TestSanitizedEnvWindowsKeys:
         command = subprocess.list2cmdline([sys.executable, "-c", probe])
 
         with patch(
-            "openjarvis._rust_bridge.get_rust_module",
+            "jarvis._rust_bridge.get_rust_module",
             side_effect=ImportError("force Python fallback"),
         ):
             result = ShellExecTool().execute(command=command)

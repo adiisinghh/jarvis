@@ -11,8 +11,8 @@ from dataclasses import dataclass
 
 import pytest
 
-from openjarvis.cli._voice_chat import VoiceSession, _split_for_speech, speak
-from openjarvis.speech.tts import TTSResult
+from jarvis.cli._voice_chat import VoiceSession, _split_for_speech, speak
+from jarvis.speech.tts import TTSResult
 
 
 @dataclass
@@ -57,7 +57,7 @@ def _session(monkeypatch, backend) -> VoiceSession:
 def _capture_playback(monkeypatch) -> list[bytes]:
     played: list[bytes] = []
     monkeypatch.setattr(
-        "openjarvis.speech.voice_io.play_wav",
+        "jarvis.speech.voice_io.play_wav",
         lambda audio, **kwargs: played.append(audio),
     )
     return played
@@ -170,7 +170,7 @@ def test_playback_failure_cancels_remaining_synthesis(monkeypatch, failure):
         assert second_started.wait(2)
         raise failure
 
-    monkeypatch.setattr("openjarvis.speech.voice_io.play_wav", fail_playback)
+    monkeypatch.setattr("jarvis.speech.voice_io.play_wav", fail_playback)
     previous_threads = set(threading.enumerate())
     try:
         if isinstance(failure, KeyboardInterrupt):
@@ -218,7 +218,7 @@ def test_prefetch_is_limited_to_one_pending_chunk(monkeypatch):
             observed.append(third_started.wait(0.1))
         played.append(audio)
 
-    monkeypatch.setattr("openjarvis.speech.voice_io.play_wav", play)
+    monkeypatch.setattr("jarvis.speech.voice_io.play_wav", play)
     backend = TrackingBackend()
     speak(text, _Console(), _session(monkeypatch, backend))
     assert observed == [False]
@@ -264,7 +264,7 @@ def test_next_reply_waits_for_an_inflight_request_from_a_failed_reply(monkeypatc
             assert old_started.wait(2)
             raise RuntimeError("device failed")
 
-    monkeypatch.setattr("openjarvis.speech.voice_io.play_wav", play)
+    monkeypatch.setattr("jarvis.speech.voice_io.play_wav", play)
     previous = set(threading.enumerate())
     errors = []
 

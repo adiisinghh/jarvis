@@ -30,7 +30,7 @@ remaining risk.
 
 The runtime-related exceptions currently cover the Linux GTK3 GLib iterator
 issue, Setuptools build/legacy-installer paths constrained by upstream GPU
-packaging, and DiskCache. The OpenJarvis DSPy optimizer disables disk caching
+packaging, and DiskCache. The Jarvis DSPy optimizer disables disk caching
 before use; its waiver is invalid if another package starts using DiskCache or
 the validated DSPy version changes. Five other entries are upstream
 maintenance-only notices. None is a blanket exception for future advisories.
@@ -44,7 +44,7 @@ review/linear-history rules. An account with repository Administration access
 can apply it once with:
 
 ```sh
-gh api --method POST repos/open-jarvis/OpenJarvis/rulesets \
+gh api --method POST repos/jarvis/Jarvis/rulesets \
   --input .github/security/required-checks.json
 ```
 

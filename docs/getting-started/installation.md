@@ -1,13 +1,13 @@
 ---
 title: Installation
-description: Get OpenJarvis running — browser app, desktop app, CLI, or Python SDK
+description: Get Jarvis running — browser app, desktop app, CLI, or Python SDK
 search:
   boost: 3
 ---
 
 # Installation
 
-OpenJarvis runs entirely on your hardware. Choose the interface that fits your workflow.
+Jarvis runs entirely on your hardware. Choose the interface that fits your workflow.
 
 ---
 
@@ -19,8 +19,8 @@ your machine and the frontend connects via `localhost`.
 ### One-command setup
 
 ```bash
-git clone https://github.com/open-jarvis/OpenJarvis.git
-cd OpenJarvis
+git clone https://github.com/adiisinghh/jarvis.git
+cd Jarvis
 ./scripts/quickstart.sh
 ```
 
@@ -39,10 +39,10 @@ If you prefer to run each step yourself:
 === "Step 1: Clone and install"
 
     ```bash
-    git clone https://github.com/open-jarvis/OpenJarvis.git
-    cd OpenJarvis
+    git clone https://github.com/adiisinghh/jarvis.git
+    cd Jarvis
     uv sync --extra desktop
-    uv run maturin develop -m rust/crates/openjarvis-python/Cargo.toml
+    uv run maturin develop -m rust/crates/jarvis-python/Cargo.toml
     cd frontend && npm install && cd ..
     ```
 
@@ -77,7 +77,7 @@ Then open [http://localhost:5173](http://localhost:5173).
 
 ## Desktop App
 
-The desktop app is a native window for the OpenJarvis chat UI. All inference and backend
+The desktop app is a native window for the Jarvis chat UI. All inference and backend
 processing happens on your local machine — the app connects to the backend you start locally.
 
 ### Setup
@@ -85,8 +85,8 @@ processing happens on your local machine — the app connects to the backend you
 **Step 1.** Start the backend (same as Browser App):
 
 ```bash
-git clone https://github.com/open-jarvis/OpenJarvis.git
-cd OpenJarvis
+git clone https://github.com/adiisinghh/jarvis.git
+cd Jarvis
 ./scripts/quickstart.sh
 ```
 
@@ -94,30 +94,30 @@ cd OpenJarvis
 
 | Platform | Download |
 |----------|----------|
-| macOS (Universal) | [:material-download: **OpenJarvis.dmg**](https://github.com/open-jarvis/OpenJarvis/releases/latest/download/OpenJarvis_universal.dmg) |
-| Windows (x64) | [:material-download: **OpenJarvis-setup.exe**](https://github.com/open-jarvis/OpenJarvis/releases/latest/download/OpenJarvis_x64-setup.exe) |
-| Windows (ARM64) | [:material-download: **OpenJarvis-arm64-setup.exe**](https://github.com/open-jarvis/OpenJarvis/releases/latest/download/OpenJarvis_arm64-setup.exe) |
-| Linux (DEB) | [:material-download: **OpenJarvis.deb**](https://github.com/open-jarvis/OpenJarvis/releases/latest/download/OpenJarvis_amd64.deb) |
-| Linux (RPM) | [:material-download: **OpenJarvis.rpm**](https://github.com/open-jarvis/OpenJarvis/releases/latest/download/OpenJarvis_x86_64.rpm) |
-| Linux (AppImage) | [:material-download: **OpenJarvis.AppImage**](https://github.com/open-jarvis/OpenJarvis/releases/latest/download/OpenJarvis_amd64.AppImage) |
+| macOS (Universal) | [:material-download: **Jarvis.dmg**](https://github.com/adiisinghh/jarvis/releases/latest/download/Jarvis_universal.dmg) |
+| Windows (x64) | [:material-download: **Jarvis-setup.exe**](https://github.com/adiisinghh/jarvis/releases/latest/download/Jarvis_x64-setup.exe) |
+| Windows (ARM64) | [:material-download: **Jarvis-arm64-setup.exe**](https://github.com/adiisinghh/jarvis/releases/latest/download/Jarvis_arm64-setup.exe) |
+| Linux (DEB) | [:material-download: **Jarvis.deb**](https://github.com/adiisinghh/jarvis/releases/latest/download/Jarvis_amd64.deb) |
+| Linux (RPM) | [:material-download: **Jarvis.rpm**](https://github.com/adiisinghh/jarvis/releases/latest/download/Jarvis_x86_64.rpm) |
+| Linux (AppImage) | [:material-download: **Jarvis.AppImage**](https://github.com/adiisinghh/jarvis/releases/latest/download/Jarvis_amd64.AppImage) |
 
 The app connects to `http://localhost:8000` automatically.
 
 !!! warning "macOS: \"app is damaged\""
     If macOS says the app is damaged, clear the Gatekeeper quarantine flag:
     ```bash
-    xattr -cr /Applications/OpenJarvis.app
+    xattr -cr /Applications/Jarvis.app
     ```
     This is normal for open-source apps distributed outside the App Store.
 
 !!! tip "All releases"
-    Browse all versions on the [GitHub Releases](https://github.com/open-jarvis/OpenJarvis/releases) page.
+    Browse all versions on the [GitHub Releases](https://github.com/adiisinghh/jarvis/releases) page.
 
 ### Build from source
 
 ```bash
-git clone https://github.com/open-jarvis/OpenJarvis.git
-cd OpenJarvis/desktop
+git clone https://github.com/adiisinghh/jarvis.git
+cd Jarvis/desktop
 npm install
 npm run tauri build
 ```
@@ -128,16 +128,16 @@ The built installer will be in `frontend/src-tauri/target/release/bundle/`.
 
 ## CLI
 
-The command-line interface is the fastest way to interact with OpenJarvis
+The command-line interface is the fastest way to interact with Jarvis
 programmatically. Every feature is accessible from the terminal.
 
 ### Install
 
 ```bash
-git clone https://github.com/open-jarvis/OpenJarvis.git
-cd OpenJarvis
+git clone https://github.com/adiisinghh/jarvis.git
+cd Jarvis
 uv sync
-uv run maturin develop -m rust/crates/openjarvis-python/Cargo.toml
+uv run maturin develop -m rust/crates/jarvis-python/Cargo.toml
 ```
 
 Requires [Rust](https://rustup.rs/). Use a supported Python 3.11–3.13 interpreter for the native extension.
@@ -178,10 +178,10 @@ For programmatic access, the `Jarvis` class provides a high-level sync API.
 ### Install
 
 ```bash
-git clone https://github.com/open-jarvis/OpenJarvis.git
-cd OpenJarvis
+git clone https://github.com/adiisinghh/jarvis.git
+cd Jarvis
 uv sync
-uv run maturin develop -m rust/crates/openjarvis-python/Cargo.toml
+uv run maturin develop -m rust/crates/jarvis-python/Cargo.toml
 ```
 
 Requires [Rust](https://rustup.rs/). Use a supported Python 3.11–3.13 interpreter for the native extension.
@@ -189,7 +189,7 @@ Requires [Rust](https://rustup.rs/). Use a supported Python 3.11–3.13 interpre
 ### Quick example
 
 ```python
-from openjarvis import Jarvis
+from jarvis import Jarvis
 
 j = Jarvis()
 print(j.ask("Explain quicksort in two sentences."))
@@ -214,7 +214,7 @@ print(result["turns"])         # number of agent turns
 For full control, use the `SystemBuilder`:
 
 ```python
-from openjarvis import SystemBuilder
+from jarvis import SystemBuilder
 
 system = (
     SystemBuilder()
@@ -237,7 +237,7 @@ See the [Python SDK guide](../user-guide/python-sdk.md) for the full API referen
 
 ## Hardware
 
-OpenJarvis has no special hardware requirements of its own — the CLI, server, and
+Jarvis has no special hardware requirements of its own — the CLI, server, and
 SDK run anywhere the software [Requirements](#requirements) below are met.
 `jarvis init` detects your CPU, RAM, and GPU, then recommends an inference engine
 and local model for the generated config. You can choose a different engine during
@@ -317,7 +317,7 @@ Memory is the real floor. With 4 GB of RAM or less and no GPU, usable memory
 is zero or less and no local model is recommended.
 
 !!! tip "Low-memory and headless machines"
-    You do not need a local model at all. Point OpenJarvis at a hosted API with the
+    You do not need a local model at all. Point Jarvis at a hosted API with the
     [cloud quick-path](install.md#cloud-quick-path) and the hardware tiers above
     stop applying.
 
@@ -330,7 +330,7 @@ environment and whichever inference engine you install.
 !!! note "Overriding the detected defaults"
     These are defaults, not limits. The generated config records what was detected
     in a comment at the top of the file, and `default_model` under `[intelligence]`
-    in `~/.openjarvis/config.toml` can be set to anything larger or smaller — see
+    in `~/.jarvis/config.toml` can be set to anything larger or smaller — see
     the [Configuration guide](configuration.md). Re-run `jarvis init --force` to
     re-detect and overwrite an existing config.
 
@@ -353,7 +353,7 @@ environment and whichever inference engine you install.
 
 ## Optional Extras
 
-OpenJarvis uses optional extras to keep the base installation lightweight.
+Jarvis uses optional extras to keep the base installation lightweight.
 
 ### Inference Backends
 
@@ -363,7 +363,7 @@ OpenJarvis uses optional extras to keep the base installation lightweight.
 | `inference-google` | `uv sync --extra inference-google` | Google Gemini API |
 
 !!! note "Ollama, vLLM, and llama.cpp are HTTP-based"
-    These engines have no additional Python dependencies — OpenJarvis communicates over HTTP. You still need the engine software running on your machine.
+    These engines have no additional Python dependencies — Jarvis communicates over HTTP. You still need the engine software running on your machine.
 
 ### Memory Backends
 
@@ -393,7 +393,7 @@ uv sync --extra desktop --extra memory-faiss --extra inference-cloud
 
 ## Setting Up an Inference Backend
 
-OpenJarvis requires at least one inference backend. Choose the one that matches your hardware.
+Jarvis requires at least one inference backend. Choose the one that matches your hardware.
 
 ### Ollama (Recommended)
 

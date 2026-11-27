@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import pytest
 
-from openjarvis.core.events import EventBus, EventType
+from jarvis.core.events import EventBus, EventType
 
 
 @pytest.mark.parametrize("backend", ["python", "rust"])
 @pytest.mark.parametrize("detector", ["identical", "poll", "ping_pong"])
 def test_changing_reasons_cannot_keep_a_loop_in_warning_state(backend, detector):
-    from openjarvis.agents.loop_guard import LoopGuard, LoopGuardConfig
+    from jarvis.agents.loop_guard import LoopGuard, LoopGuardConfig
 
     config = LoopGuardConfig(
         max_identical_calls=3 if detector == "identical" else 100,
@@ -46,7 +46,7 @@ def test_changing_reasons_cannot_keep_a_loop_in_warning_state(backend, detector)
 
 
 def test_python_identical_call_warnings_are_independent_for_different_arguments():
-    from openjarvis.agents.loop_guard import LoopGuard, LoopGuardConfig
+    from jarvis.agents.loop_guard import LoopGuard, LoopGuardConfig
 
     guard = LoopGuard(
         LoopGuardConfig(
@@ -62,7 +62,7 @@ def test_python_identical_call_warnings_are_independent_for_different_arguments(
 
 class TestLoopGuard:
     def _make_guard(self, **kwargs):
-        from openjarvis.agents.loop_guard import LoopGuard, LoopGuardConfig
+        from jarvis.agents.loop_guard import LoopGuard, LoopGuardConfig
 
         kwargs.setdefault("warn_before_block", False)
         config = LoopGuardConfig(**kwargs)
@@ -124,7 +124,7 @@ class TestLoopGuard:
         assert not v.blocked
 
     def test_context_compression_no_overflow(self):
-        from openjarvis.core.types import Message, Role
+        from jarvis.core.types import Message, Role
 
         guard, _ = self._make_guard(max_context_messages=100)
         messages = [Message(role=Role.USER, content=f"msg {i}") for i in range(10)]
@@ -132,7 +132,7 @@ class TestLoopGuard:
         assert len(result) == 10
 
     def test_context_compression_with_overflow(self):
-        from openjarvis.core.types import Message, Role
+        from jarvis.core.types import Message, Role
 
         guard, _ = self._make_guard(max_context_messages=10)
         messages = (
@@ -150,7 +150,7 @@ class TestLoopGuard:
 
     def test_context_compression_stage4_uses_current_state(self):
         """Stage 4 should derive from compressed state."""
-        from openjarvis.core.types import Message, Role
+        from jarvis.core.types import Message, Role
 
         guard, _ = self._make_guard(max_context_messages=5)
         messages = (
@@ -178,7 +178,7 @@ class TestLoopGuard:
         assert not v.blocked
 
     def test_disabled_loop_guard(self):
-        from openjarvis.agents.loop_guard import LoopGuard, LoopGuardConfig
+        from jarvis.agents.loop_guard import LoopGuard, LoopGuardConfig
 
         config = LoopGuardConfig(enabled=False)
         guard = LoopGuard(config)

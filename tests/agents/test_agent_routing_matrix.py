@@ -6,12 +6,12 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from openjarvis.agents._stubs import AgentResult
-from openjarvis.agents.native_openhands import NativeOpenHandsAgent
-from openjarvis.agents.native_react import NativeReActAgent
-from openjarvis.agents.orchestrator import OrchestratorAgent
-from openjarvis.agents.simple import SimpleAgent
-from openjarvis.core.events import EventBus, EventType
+from jarvis.agents._stubs import AgentResult
+from jarvis.agents.native_openhands import NativeOpenHandsAgent
+from jarvis.agents.native_react import NativeReActAgent
+from jarvis.agents.orchestrator import OrchestratorAgent
+from jarvis.agents.simple import SimpleAgent
+from jarvis.core.events import EventBus, EventType
 
 # ---------------------------------------------------------------------------
 # Helpers

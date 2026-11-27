@@ -6,9 +6,9 @@ from datetime import datetime, timezone
 
 import pytest
 
-from openjarvis.core.config import SystemPromptConfig
-from openjarvis.prompt.builder import SystemPromptBuilder
-from openjarvis.prompt.time_context import (
+from jarvis.core.config import SystemPromptConfig
+from jarvis.prompt.builder import SystemPromptBuilder
+from jarvis.prompt.time_context import (
     current_time_section,
     reset_request_timezone,
     set_request_timezone,
@@ -78,7 +78,7 @@ def test_builder_can_turn_time_off() -> None:
 
 @pytest.mark.parametrize("enabled", [True, False])
 def test_time_settings_loaded_from_config(tmp_path, enabled):
-    from openjarvis.core.config import load_config
+    from jarvis.core.config import load_config
 
     path = tmp_path / "config.toml"
     path.write_text(

@@ -3,11 +3,11 @@
 // ---------------------------------------------------------------------------
 //
 // Settings stores an IANA zone name, or '' for "use this device's zone".
-// Chat and agent requests carry the resolved zone in X-OpenJarvis-Timezone;
+// Chat and agent requests carry the resolved zone in X-Jarvis-Timezone;
 // the server tells the model, so UTC times from tools (mail, calendar) are
 // shown in the user's time.
 
-export const TIMEZONE_HEADER = 'X-OpenJarvis-Timezone';
+export const TIMEZONE_HEADER = 'X-Jarvis-Timezone';
 
 export function deviceTimeZone(): string {
   try {
@@ -35,7 +35,7 @@ export function resolveTimeZone(setting: string | undefined): string {
 export function timeZoneHeaders(): Record<string, string> {
   let setting = '';
   try {
-    const raw = localStorage.getItem('openjarvis-settings');
+    const raw = localStorage.getItem('jarvis-settings');
     if (raw) setting = String(JSON.parse(raw).timeZone || '');
   } catch {
     setting = '';

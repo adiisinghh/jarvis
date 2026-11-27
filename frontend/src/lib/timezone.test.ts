@@ -36,7 +36,7 @@ describe('user time zone', () => {
 
   it('sends the device zone, or the one picked in Settings', () => {
     expect(timeZoneHeaders()).toEqual({ [TIMEZONE_HEADER]: deviceTimeZone() });
-    localStorage.setItem('openjarvis-settings', JSON.stringify({ timeZone: 'Africa/Cairo' }));
+    localStorage.setItem('jarvis-settings', JSON.stringify({ timeZone: 'Africa/Cairo' }));
     expect(timeZoneHeaders()).toEqual({ [TIMEZONE_HEADER]: 'Africa/Cairo' });
   });
 });

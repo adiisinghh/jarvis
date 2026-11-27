@@ -14,7 +14,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from click.testing import CliRunner
 
-from openjarvis.cli import cli
+from jarvis.cli import cli
 
 _READ_TEXT = Path.read_text
 _WRITE_TEXT = Path.write_text
@@ -55,8 +55,8 @@ def config_path(tmp_path: Path) -> Path:
 
 def test_auth_create_key_preserves_utf8_config(config_path: Path) -> None:
     with (
-        patch("openjarvis.cli.auth_cmd.DEFAULT_CONFIG_PATH", config_path),
-        patch("openjarvis.cli.auth_cmd.DEFAULT_CONFIG_DIR", config_path.parent),
+        patch("jarvis.cli.auth_cmd.DEFAULT_CONFIG_PATH", config_path),
+        patch("jarvis.cli.auth_cmd.DEFAULT_CONFIG_DIR", config_path.parent),
     ):
         result = CliRunner().invoke(cli, ["auth", "create-key"])
 
@@ -67,7 +67,7 @@ def test_auth_create_key_preserves_utf8_config(config_path: Path) -> None:
 
 
 def test_auth_revoke_key_preserves_utf8_config(config_path: Path) -> None:
-    with patch("openjarvis.cli.auth_cmd.DEFAULT_CONFIG_PATH", config_path):
+    with patch("jarvis.cli.auth_cmd.DEFAULT_CONFIG_PATH", config_path):
         result = CliRunner().invoke(cli, ["auth", "revoke-key"])
 
     assert result.exit_code == 0, result.output
@@ -82,7 +82,7 @@ def test_tunnel_status_reads_utf8_config(tmp_path: Path) -> None:
         (_NON_CP1252_COMMENT + 'public_url = "https://example.test"\n').encode("utf-8")
     )
 
-    with patch("openjarvis.cli.tunnel_cmd.DEFAULT_CONFIG_PATH", config_path):
+    with patch("jarvis.cli.tunnel_cmd.DEFAULT_CONFIG_PATH", config_path):
         result = CliRunner().invoke(cli, ["tunnel", "status"])
 
     assert result.exit_code == 0, result.output
@@ -109,7 +109,7 @@ def test_mine_init_appends_to_utf8_config(tmp_path: Path) -> None:
             "--pearld-rpc-password-env",
             "TEST_PEARLD_PASSWORD",
         ],
-        env={"OPENJARVIS_CONFIG": str(config_path)},
+        env={"JARVIS_CONFIG": str(config_path)},
     )
 
     assert result.exit_code == 0, result.output
@@ -128,19 +128,19 @@ def test_quickstart_writes_utf8_config(tmp_path: Path) -> None:
     hw.gpu = None
 
     with (
-        patch("openjarvis.cli.quickstart_cmd.detect_hardware", return_value=hw),
-        patch("openjarvis.cli.quickstart_cmd.DEFAULT_CONFIG_PATH", config_path),
-        patch("openjarvis.cli.quickstart_cmd.DEFAULT_CONFIG_DIR", tmp_path),
+        patch("jarvis.cli.quickstart_cmd.detect_hardware", return_value=hw),
+        patch("jarvis.cli.quickstart_cmd.DEFAULT_CONFIG_PATH", config_path),
+        patch("jarvis.cli.quickstart_cmd.DEFAULT_CONFIG_DIR", tmp_path),
         patch(
-            "openjarvis.cli.quickstart_cmd.generate_default_toml",
+            "jarvis.cli.quickstart_cmd.generate_default_toml",
             return_value=_NON_CP1252_COMMENT + "[engine]\n",
         ),
-        patch("openjarvis.cli.quickstart_cmd.recommend_engine", return_value="ollama"),
-        patch("openjarvis.cli.quickstart_cmd._check_engine_health", return_value=True),
+        patch("jarvis.cli.quickstart_cmd.recommend_engine", return_value="ollama"),
+        patch("jarvis.cli.quickstart_cmd._check_engine_health", return_value=True),
         patch(
-            "openjarvis.cli.quickstart_cmd._check_model_available", return_value=True
+            "jarvis.cli.quickstart_cmd._check_model_available", return_value=True
         ),
-        patch("openjarvis.cli.quickstart_cmd._test_query", return_value="Hello!"),
+        patch("jarvis.cli.quickstart_cmd._test_query", return_value="Hello!"),
     ):
         result = CliRunner().invoke(cli, ["quickstart"])
 
@@ -149,9 +149,9 @@ def test_quickstart_writes_utf8_config(tmp_path: Path) -> None:
 
 
 def test_digest_schedule_preserves_utf8_config(config_path: Path) -> None:
-    from openjarvis.cli.digest_cmd import _save_digest_schedule
+    from jarvis.cli.digest_cmd import _save_digest_schedule
 
-    with patch("openjarvis.cli.digest_cmd.DEFAULT_CONFIG_PATH", config_path):
+    with patch("jarvis.cli.digest_cmd.DEFAULT_CONFIG_PATH", config_path):
         _save_digest_schedule(enabled=True, cron="0 8 * * *")
 
     text = _read_utf8(config_path)

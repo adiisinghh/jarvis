@@ -5,8 +5,8 @@ from __future__ import annotations
 import threading
 import time
 
-from openjarvis.core.registry import ToolRegistry
-from openjarvis.tools.repl import ReplTool
+from jarvis.core.registry import ToolRegistry
+from jarvis.tools.repl import ReplTool
 
 
 class TestReplSpec:
@@ -243,7 +243,7 @@ class TestReplTimeout:
         finally:
             release.set()
             for thread in threading.enumerate():
-                if thread.name == f"openjarvis-repl-{session.session_id}":
+                if thread.name == f"jarvis-repl-{session.session_id}":
                     thread.join(timeout=2)
 
     def test_infinite_loop_timeout(self):
@@ -262,7 +262,7 @@ class TestReplTimeout:
             result = tool.execute(code="while True: pass")
             assert not result.success
             assert "timed out" in result.content
-            name = f"openjarvis-repl-{result.metadata['session_id']}"
+            name = f"jarvis-repl-{result.metadata['session_id']}"
             workers = [t for t in threading.enumerate() if t.name == name]
             for worker in workers:
                 worker.join(timeout=2)

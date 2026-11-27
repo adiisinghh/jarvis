@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 from click.testing import CliRunner
 
-from openjarvis.cli import cli
+from jarvis.cli import cli
 
 
 class TestAgentCmd:
@@ -26,7 +26,7 @@ class TestAgentCmd:
         # A message with bracketed text is what triggers the MarkupError
         # when fed to console.print() unescaped.
         boom = RuntimeError("DB locked at [/var/run/x] not a [valid] tag")
-        with patch("openjarvis.cli.agent_cmd._get_manager", side_effect=boom):
+        with patch("jarvis.cli.agent_cmd._get_manager", side_effect=boom):
             result = CliRunner().invoke(cli, ["agents", "list"])
         # No traceback / unhandled exception leaked through.
         assert result.exception is None, result.output
@@ -64,7 +64,7 @@ class TestAgentCmd:
         ]
         mgr.list_tasks.return_value = []
         mgr.list_channel_bindings.return_value = []
-        with patch("openjarvis.cli.agent_cmd._get_manager", return_value=mgr):
+        with patch("jarvis.cli.agent_cmd._get_manager", return_value=mgr):
             result = CliRunner().invoke(cli, ["agents", "list"])
         assert result.exception is None, result.output
         assert result.exit_code == 0

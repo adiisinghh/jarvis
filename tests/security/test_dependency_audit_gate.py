@@ -231,7 +231,7 @@ def test_missing_package_source_is_an_audit_error(tmp_path):
 def test_only_own_editable_project_is_excluded(tmp_path):
     path = tmp_path / "uv.lock"
     path.write_text(
-        '[[package]]\nname="openjarvis"\nsource={editable="."}\n'
+        '[[package]]\nname="jarvis"\nsource={editable="."}\n'
         '[[package]]\nname="example"\nversion="1.2.3"\nsource={registry="https://pypi.org/simple"}\n'
     )
     assert gate.lock_packages(path, "uv.lock") == [
@@ -252,8 +252,8 @@ def test_empty_lock_cannot_pass(tmp_path):
 def test_own_native_project_is_covered_by_the_separate_rust_audit(tmp_path):
     path = tmp_path / "uv.lock"
     path.write_text(
-        '[[package]]\nname="openjarvis-rust"\n'
-        'source={directory="rust/crates/openjarvis-python"}\n'
+        '[[package]]\nname="jarvis-rust"\n'
+        'source={directory="rust/crates/jarvis-python"}\n'
         '[[package]]\nname="example"\nversion="1.2.3"\n'
         'source={registry="https://pypi.org/simple"}\n'
     )
@@ -261,7 +261,7 @@ def test_own_native_project_is_covered_by_the_separate_rust_audit(tmp_path):
         {"name": "example", "version": "1.2.3"}
     ]
     path.write_text(
-        path.read_text().replace("rust/crates/openjarvis-python", "elsewhere")
+        path.read_text().replace("rust/crates/jarvis-python", "elsewhere")
     )
     with pytest.raises(gate.AuditError, match="Unreviewed"):
         gate.lock_packages(path, "uv.lock")

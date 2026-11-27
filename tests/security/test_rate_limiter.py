@@ -6,7 +6,7 @@ import time
 
 import pytest
 
-from openjarvis.security.rate_limiter import (
+from jarvis.security.rate_limiter import (
     RateLimitConfig,
     RateLimiter,
     TokenBucket,
@@ -15,7 +15,7 @@ from openjarvis.security.rate_limiter import (
 
 @pytest.fixture(params=["native", "python"], autouse=True)
 def security_backend(request, monkeypatch):
-    import openjarvis._rust_bridge as bridge
+    import jarvis._rust_bridge as bridge
 
     if request.param == "native" and not bridge.RUST_AVAILABLE:
         pytest.skip("native extension unavailable")

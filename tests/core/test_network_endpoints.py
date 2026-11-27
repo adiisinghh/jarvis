@@ -4,7 +4,7 @@ import socket
 
 import pytest
 
-from openjarvis.core._network import endpoint_is_local_network, endpoint_is_loopback
+from jarvis.core._network import endpoint_is_local_network, endpoint_is_loopback
 
 
 @pytest.mark.parametrize(

@@ -7,10 +7,10 @@ from unittest.mock import MagicMock
 
 import pytest
 
-import openjarvis.security.scanner as scanner_module
-from openjarvis.core.config import CapabilitiesConfig, JarvisConfig, SecurityConfig
-from openjarvis.core.events import EventBus
-from openjarvis.security import SecurityContext, setup_security
+import jarvis.security.scanner as scanner_module
+from jarvis.core.config import CapabilitiesConfig, JarvisConfig, SecurityConfig
+from jarvis.core.events import EventBus
+from jarvis.security import SecurityContext, setup_security
 
 
 def _make_mock_engine() -> MagicMock:
@@ -36,7 +36,7 @@ def _make_config(*, enabled: bool = True, caps_enabled: bool = False) -> JarvisC
 
 class TestSetupSecurityEnabled:
     def test_returns_wrapped_engine(self) -> None:
-        from openjarvis.security.guardrails import GuardrailsEngine
+        from jarvis.security.guardrails import GuardrailsEngine
 
         engine = _make_mock_engine()
         bus = EventBus()
@@ -58,8 +58,8 @@ class TestSetupSecurityEnabled:
 
     def test_wraps_and_redacts_without_rust(self, monkeypatch) -> None:
         """Default data-protection controls remain active without Rust."""
-        from openjarvis.core.types import Message, Role
-        from openjarvis.security.guardrails import GuardrailsEngine
+        from jarvis.core.types import Message, Role
+        from jarvis.security.guardrails import GuardrailsEngine
 
         monkeypatch.setattr(scanner_module._rust_bridge, "RUST_AVAILABLE", False)
         engine = _make_mock_engine()
@@ -97,7 +97,7 @@ class TestSetupSecurityEnabled:
 
         monkeypatch.setattr(scanner_module, "SecretScanner", _broken_scanner)
 
-        with caplog.at_level(logging.WARNING, logger="openjarvis.security"):
+        with caplog.at_level(logging.WARNING, logger="jarvis.security"):
             sec = setup_security(config, _make_mock_engine(), EventBus())
 
         assert isinstance(sec, SecurityContext)
@@ -130,7 +130,7 @@ class TestSetupSecurityEnabled:
             raise RuntimeError("policy unavailable")
 
         monkeypatch.setattr(
-            "openjarvis.security.capabilities.CapabilityPolicy",
+            "jarvis.security.capabilities.CapabilityPolicy",
             _broken_policy,
         )
 
@@ -148,7 +148,7 @@ class TestSetupSecurityEnabled:
             raise RuntimeError("limiter unavailable")
 
         monkeypatch.setattr(
-            "openjarvis.security.rate_limiter.RateLimiter",
+            "jarvis.security.rate_limiter.RateLimiter",
             _broken_limiter,
         )
 
@@ -182,7 +182,7 @@ def test_partial_capability_config_preserves_profile_defaults(
     enabled,
     default_deny,
 ):
-    from openjarvis.core.config import load_config
+    from jarvis.core.config import load_config
 
     path = tmp_path / "config.toml"
     path.write_text(

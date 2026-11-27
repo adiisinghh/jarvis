@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from openjarvis.tools.storage.ingest import (
+from jarvis.tools.storage.ingest import (
     detect_file_type,
     ingest_path,
     read_document,
@@ -308,7 +308,7 @@ def test_unreadable_docx_does_not_abort_directory_ingest(tmp_path: Path, damage)
 def test_docx_size_limit_skips_document_and_keeps_other_files(tmp_path, monkeypatch):
     path = tmp_path / "oversized.docx"
     _make_docx(path, _p("body exceeds the configured limit"))
-    monkeypatch.setattr("openjarvis.tools.storage.ingest._DOCX_MAX_XML_BYTES", 32)
+    monkeypatch.setattr("jarvis.tools.storage.ingest._DOCX_MAX_XML_BYTES", 32)
     (tmp_path / "ok.txt").write_text("still indexed", encoding="utf-8")
 
     with pytest.raises(OSError, match="too large"):

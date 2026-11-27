@@ -4,8 +4,8 @@
 setup() {
     # Use mktemp to ensure temp dir exists and is writable
     TEST_TMPDIR=$(mktemp -d)
-    export OPENJARVIS_HOME="$TEST_TMPDIR/.openjarvis"
-    mkdir -p "$OPENJARVIS_HOME/.state/models"
+    export JARVIS_HOME="$TEST_TMPDIR/.jarvis"
+    mkdir -p "$JARVIS_HOME/.state/models"
     export OLLAMA_STUB_LOG="$TEST_TMPDIR/ollama.log"
     : > "$OLLAMA_STUB_LOG"
     export PATH="$BATS_TEST_DIRNAME/stubs:$PATH"
@@ -15,7 +15,7 @@ setup() {
 model_marker() {
     local model_id="$1" state="$2" key
     key=$(printf '%s' "$model_id" | (command -v sha256sum >/dev/null && sha256sum || shasum -a 256) | cut -d ' ' -f 1)
-    printf '%s/.state/models/v1/%s.%s' "$OPENJARVIS_HOME" "$key" "$state"
+    printf '%s/.state/models/v1/%s.%s' "$JARVIS_HOME" "$key" "$state"
 }
 
 teardown() {
@@ -49,12 +49,12 @@ teardown() {
 
 @test "ready marker is created via atomic rename (no .tmp leftovers)" {
     OLLAMA_STUB_EXIT=0 run bash "$SCRIPT" qwen3.5:2b
-    leftover=$(find "$OPENJARVIS_HOME/.state/models" -name "*.tmp" 2>/dev/null | wc -l)
+    leftover=$(find "$JARVIS_HOME/.state/models" -name "*.tmp" 2>/dev/null | wc -l)
     [ "$leftover" -eq 0 ]
 }
 
 @test "model IDs cannot remove files outside the marker directory" {
-    local sentinel="$OPENJARVIS_HOME/.state/outside.ready"
+    local sentinel="$JARVIS_HOME/.state/outside.ready"
     touch "$sentinel"
     OLLAMA_STUB_EXIT=0 run bash "$SCRIPT" ../outside
     [ "$status" -eq 0 ]

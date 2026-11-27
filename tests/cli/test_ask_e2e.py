@@ -10,11 +10,11 @@ from unittest import mock
 
 from click.testing import CliRunner
 
-from openjarvis.cli import cli
-from openjarvis.core.config import JarvisConfig
+from jarvis.cli import cli
+from jarvis.core.config import JarvisConfig
 
 # Import the actual module (not the Click command attribute)
-_ask_mod = importlib.import_module("openjarvis.cli.ask")
+_ask_mod = importlib.import_module("jarvis.cli.ask")
 
 
 def _mock_engine_response():
@@ -36,8 +36,8 @@ def _patch_ask(monkeypatch, tmp_path, *, engine_result=None, no_engine=False):
     # Re-register SimpleAgent after the autouse `_clean_registries` conftest
     # fixture clears it. ``JarvisConfig().agent.default_agent`` defaults to
     # ``"simple"``, so ``jarvis ask "..."`` (no --agent) routes through it.
-    from openjarvis.agents.simple import SimpleAgent
-    from openjarvis.core.registry import AgentRegistry
+    from jarvis.agents.simple import SimpleAgent
+    from jarvis.core.registry import AgentRegistry
 
     if not AgentRegistry.contains("simple"):
         AgentRegistry.register_value("simple", SimpleAgent)
@@ -94,10 +94,10 @@ class TestAskCommand:
         _patch_ask(monkeypatch, tmp_path)
         cfg = _ask_mod.load_config()
 
-        # A startup warning (e.g. missing openjarvis_rust) goes to stderr and
+        # A startup warning (e.g. missing jarvis_rust) goes to stderr and
         # must not end up in the JSON on stdout (#1115).
         def _load_config_with_warning():
-            logging.getLogger("openjarvis.security").warning(
+            logging.getLogger("jarvis.security").warning(
                 "Failed to set up rate limiter"
             )
             return cfg

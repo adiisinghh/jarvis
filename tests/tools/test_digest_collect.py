@@ -6,12 +6,12 @@ import importlib
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
-from openjarvis.connectors._stubs import Document
-from openjarvis.core.registry import ConnectorRegistry, ToolRegistry
+from jarvis.connectors._stubs import Document
+from jarvis.core.registry import ConnectorRegistry, ToolRegistry
 
 
 def test_digest_collect_registered():
-    from openjarvis.tools import digest_collect
+    from jarvis.tools import digest_collect
 
     # The registry fixture clears entries, while Python caches imported modules.
     if not ToolRegistry.contains("digest_collect"):
@@ -20,7 +20,7 @@ def test_digest_collect_registered():
 
 
 def test_digest_collect_executes():
-    from openjarvis.tools.digest_collect import DigestCollectTool
+    from jarvis.tools.digest_collect import DigestCollectTool
 
     tool = DigestCollectTool()
 
@@ -52,7 +52,7 @@ def test_digest_collect_executes():
 
 
 def test_digest_collect_missing_connector():
-    from openjarvis.tools.digest_collect import DigestCollectTool
+    from jarvis.tools.digest_collect import DigestCollectTool
 
     tool = DigestCollectTool()
 
@@ -64,7 +64,7 @@ def test_digest_collect_missing_connector():
 
 
 def test_digest_collect_shows_calendar_start_time():
-    from openjarvis.tools.digest_collect import DigestCollectTool
+    from jarvis.tools.digest_collect import DigestCollectTool
 
     tool = DigestCollectTool()
 
@@ -92,7 +92,7 @@ def test_digest_collect_shows_calendar_start_time():
 
 
 def test_oura_line_without_day_uses_timestamp_date():
-    from openjarvis.tools.digest_collect import _format_doc
+    from jarvis.tools.digest_collect import _format_doc
 
     doc = Document(
         doc_id="sleep-1",

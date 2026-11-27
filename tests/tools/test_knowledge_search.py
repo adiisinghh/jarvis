@@ -8,9 +8,9 @@ from pathlib import Path
 
 import pytest
 
-from openjarvis.connectors.store import KnowledgeStore
-from openjarvis.core.registry import ToolRegistry
-from openjarvis.tools.knowledge_search import KnowledgeSearchTool
+from jarvis.connectors.store import KnowledgeStore
+from jarvis.core.registry import ToolRegistry
+from jarvis.tools.knowledge_search import KnowledgeSearchTool
 
 # ---------------------------------------------------------------------------
 # Fixture
@@ -115,7 +115,7 @@ class TestKnowledgeSearchTool:
         default ``KnowledgeStore()``. The tool used to answer "No knowledge
         store configured." although the documents were there.
         """
-        monkeypatch.setattr("openjarvis.core.config.DEFAULT_CONFIG_DIR", tmp_path)
+        monkeypatch.setattr("jarvis.core.config.DEFAULT_CONFIG_DIR", tmp_path)
         with KnowledgeStore() as default:
             default.store(
                 "Quarterly budget review for the Phoenix project.",
@@ -135,7 +135,7 @@ class TestKnowledgeSearchTool:
         def boom(*args, **kwargs):
             raise OSError("disk full")
 
-        monkeypatch.setattr("openjarvis.tools.knowledge_search.KnowledgeStore", boom)
+        monkeypatch.setattr("jarvis.tools.knowledge_search.KnowledgeStore", boom)
         tool = KnowledgeSearchTool()
         result = tool.execute(query="kubernetes")
         assert result.success is False
@@ -217,7 +217,7 @@ class TestKnowledgeSearchTool:
         plain import won't re-execute the ``@ToolRegistry.register`` decorator,
         so we explicitly reload the module.
         """
-        mod_name = "openjarvis.tools.knowledge_search"
+        mod_name = "jarvis.tools.knowledge_search"
         if mod_name in sys.modules:
             importlib.reload(sys.modules[mod_name])
         else:
@@ -228,7 +228,7 @@ class TestKnowledgeSearchTool:
 
 def test_tool_uses_two_stage_retriever(tmp_path: Path) -> None:
     """KnowledgeSearchTool delegates to TwoStageRetriever when supplied."""
-    from openjarvis.connectors.retriever import TwoStageRetriever
+    from jarvis.connectors.retriever import TwoStageRetriever
 
     store = KnowledgeStore(db_path=str(tmp_path / "ts_test.db"))
     store.store(

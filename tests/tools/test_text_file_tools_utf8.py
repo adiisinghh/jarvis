@@ -44,7 +44,7 @@ def _cp1252_locale(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def test_memory_manage_round_trips_utf8(tmp_path: Path) -> None:
-    from openjarvis.tools.memory_manage import MemoryManageTool
+    from jarvis.tools.memory_manage import MemoryManageTool
 
     path = tmp_path / "MEMORY.md"
     path.write_bytes(f"- caf{_E} {_JP}\n".encode("utf-8"))
@@ -65,7 +65,7 @@ def test_memory_manage_round_trips_utf8(tmp_path: Path) -> None:
 
 
 def test_user_profile_manage_round_trips_utf8(tmp_path: Path) -> None:
-    from openjarvis.tools.user_profile_manage import UserProfileManageTool
+    from jarvis.tools.user_profile_manage import UserProfileManageTool
 
     path = tmp_path / "USER.md"
     path.write_bytes(f"- Zo{_E} {_JP}\n".encode("utf-8"))
@@ -88,7 +88,7 @@ def test_user_profile_manage_round_trips_utf8(tmp_path: Path) -> None:
 
 
 def test_skill_manage_writes_utf8_toml(tmp_path: Path) -> None:
-    from openjarvis.tools.skill_manage import SkillManageTool
+    from jarvis.tools.skill_manage import SkillManageTool
 
     tool = SkillManageTool(skills_dir=tmp_path)
     description = f"V{_E}rifier l'{_E}tat {_JP}"
@@ -110,8 +110,8 @@ def test_skill_manage_writes_utf8_toml(tmp_path: Path) -> None:
 
 @pytest.mark.parametrize("kind", ["memory", "user"])
 def test_legacy_invalid_utf8_is_not_truncated(tmp_path: Path, kind: str) -> None:
-    from openjarvis.tools.memory_manage import MemoryManageTool
-    from openjarvis.tools.user_profile_manage import UserProfileManageTool
+    from jarvis.tools.memory_manage import MemoryManageTool
+    from jarvis.tools.user_profile_manage import UserProfileManageTool
 
     path = tmp_path / "legacy.md"
     original = b"- caf\xe9\n"

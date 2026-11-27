@@ -10,8 +10,8 @@ from unittest.mock import Mock
 
 import pytest
 
-from openjarvis.security.capabilities import CapabilityPolicy
-from openjarvis.security.rate_limiter import RateLimitConfig, RateLimiter
+from jarvis.security.capabilities import CapabilityPolicy
+from jarvis.security.rate_limiter import RateLimitConfig, RateLimiter
 
 
 @pytest.mark.parametrize("policy_class", [CapabilityPolicy, RateLimiter])
@@ -19,7 +19,7 @@ from openjarvis.security.rate_limiter import RateLimitConfig, RateLimiter
 def test_available_backend_initialization_errors_propagate(
     monkeypatch, policy_class, error_class
 ):
-    import openjarvis._rust_bridge as bridge
+    import jarvis._rust_bridge as bridge
 
     constructor = Mock(side_effect=error_class("broken native backend"))
     native = SimpleNamespace(CapabilityPolicy=constructor, RateLimiter=constructor)
@@ -31,7 +31,7 @@ def test_available_backend_initialization_errors_propagate(
 
 @pytest.mark.parametrize("use_native", [True, False])
 def test_concurrent_checks_cannot_exceed_burst(monkeypatch, use_native):
-    import openjarvis._rust_bridge as bridge
+    import jarvis._rust_bridge as bridge
 
     if use_native and not bridge.RUST_AVAILABLE:
         pytest.skip("native extension unavailable")
@@ -48,12 +48,12 @@ def test_security_enforcement_in_process_without_native_extension():
     probe = textwrap.dedent(
         """\
         import sys
-        sys.modules['openjarvis_rust'] = None
-        from openjarvis._rust_bridge import RUST_AVAILABLE
-        from openjarvis.core.types import ToolCall, ToolResult
-        from openjarvis.security.capabilities import CapabilityPolicy
-        from openjarvis.security.rate_limiter import RateLimitConfig, RateLimiter
-        from openjarvis.tools._stubs import BaseTool, ToolExecutor, ToolSpec
+        sys.modules['jarvis_rust'] = None
+        from jarvis._rust_bridge import RUST_AVAILABLE
+        from jarvis.core.types import ToolCall, ToolResult
+        from jarvis.security.capabilities import CapabilityPolicy
+        from jarvis.security.rate_limiter import RateLimitConfig, RateLimiter
+        from jarvis.tools._stubs import BaseTool, ToolExecutor, ToolSpec
         assert RUST_AVAILABLE is False
         effects = []
         class ProbeTool(BaseTool):

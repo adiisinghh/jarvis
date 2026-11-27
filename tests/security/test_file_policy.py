@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from openjarvis.security.file_policy import filter_sensitive_paths, is_sensitive_file
+from jarvis.security.file_policy import filter_sensitive_paths, is_sensitive_file
 
 
 @pytest.fixture(params=["default", "python"])
@@ -17,7 +17,7 @@ def policy_backend(request, monkeypatch):
         def unavailable():
             raise ImportError("exercise the Python fallback")
 
-        monkeypatch.setattr("openjarvis._rust_bridge.get_rust_module", unavailable)
+        monkeypatch.setattr("jarvis._rust_bridge.get_rust_module", unavailable)
 
 
 class TestIsSensitiveFile:
@@ -284,7 +284,7 @@ class TestCaseInsensitiveAndExtraNames:
         def unavailable():
             raise ImportError("exercise the Python fallback")
 
-        monkeypatch.setattr("openjarvis._rust_bridge.get_rust_module", unavailable)
+        monkeypatch.setattr("jarvis._rust_bridge.get_rust_module", unavailable)
         self._check()
 
 

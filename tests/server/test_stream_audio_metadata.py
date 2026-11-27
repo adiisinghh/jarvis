@@ -19,7 +19,7 @@ import pytest
 
 pytest.importorskip("fastapi")
 
-from openjarvis.server.models import (  # noqa: E402
+from jarvis.server.models import (  # noqa: E402
     AudioMeta,
     ChatCompletionRequest,
     ChatCompletionResponse,
@@ -28,7 +28,7 @@ from openjarvis.server.models import (  # noqa: E402
     ChoiceMessage,
     UsageInfo,
 )
-from openjarvis.server.routes import _handle_agent_stream  # noqa: E402
+from jarvis.server.routes import _handle_agent_stream  # noqa: E402
 
 
 def _response(audio: AudioMeta | None) -> ChatCompletionResponse:
@@ -51,7 +51,7 @@ def _response(audio: AudioMeta | None) -> ChatCompletionResponse:
 def _collect(monkeypatch, response: ChatCompletionResponse) -> list[dict]:
     """Run the streaming handler and return its decoded SSE payloads."""
     monkeypatch.setattr(
-        "openjarvis.server.routes._handle_agent",
+        "jarvis.server.routes._handle_agent",
         lambda *a, **k: response,
     )
 

@@ -14,12 +14,12 @@ from unittest.mock import MagicMock
 import pytest
 from click.testing import CliRunner
 
-from openjarvis.agents.digest_store import DigestArtifact, DigestStore
+from jarvis.agents.digest_store import DigestArtifact, DigestStore
 
 
 def test_digest_command_exists():
     """The digest command is registered on the CLI."""
-    from openjarvis.cli import cli
+    from jarvis.cli import cli
 
     runner = CliRunner()
     result = runner.invoke(cli, ["digest", "--help"])
@@ -28,7 +28,7 @@ def test_digest_command_exists():
 
 
 def test_digest_displays_cached(tmp_path):
-    from openjarvis.cli import cli
+    from jarvis.cli import cli
 
     db_path = str(tmp_path / "digest.db")
     store = DigestStore(db_path=db_path)
@@ -52,7 +52,7 @@ def test_digest_displays_cached(tmp_path):
 
 
 def test_digest_no_cache(tmp_path):
-    from openjarvis.cli import cli
+    from jarvis.cli import cli
 
     db_path = str(tmp_path / "empty.db")
     runner = CliRunner()
@@ -69,9 +69,9 @@ def test_digest_playback_requires_audio_file_and_audio_enabled(
 ):
     import importlib
 
-    from openjarvis.cli import cli
+    from jarvis.cli import cli
 
-    digest_mod = importlib.import_module("openjarvis.cli.digest_cmd")
+    digest_mod = importlib.import_module("jarvis.cli.digest_cmd")
     if audio_kind == "empty":
         audio_path = Path("")
     else:
@@ -98,7 +98,7 @@ def test_digest_playback_requires_audio_file_and_audio_enabled(
     play = MagicMock()
     monkeypatch.setattr(digest_mod, "_play_audio", play)
     jarvis = MagicMock()
-    monkeypatch.setattr("openjarvis.sdk.Jarvis", jarvis)
+    monkeypatch.setattr("jarvis.sdk.Jarvis", jarvis)
     args = ["digest", "--db-path", db_path]
     if fresh:
         args.append("--fresh")
@@ -125,12 +125,12 @@ def test_digest_playback_requires_audio_file_and_audio_enabled(
 
 
 def test_play_audio_falls_back_without_an_external_player(monkeypatch):
-    from openjarvis.cli import digest_cmd
+    from jarvis.cli import digest_cmd
 
     player = MagicMock(side_effect=FileNotFoundError())
     fallback = MagicMock()
     monkeypatch.setattr(digest_cmd.subprocess, "run", player)
-    monkeypatch.setattr("openjarvis.speech.voice_io.play_audio_file", fallback)
+    monkeypatch.setattr("jarvis.speech.voice_io.play_audio_file", fallback)
 
     digest_cmd._play_audio("digest.mp3")
 
@@ -139,23 +139,23 @@ def test_play_audio_falls_back_without_an_external_player(monkeypatch):
 
 
 def test_play_audio_keeps_a_working_external_player(monkeypatch):
-    from openjarvis.cli import digest_cmd
+    from jarvis.cli import digest_cmd
 
     fallback = MagicMock()
     monkeypatch.setattr(digest_cmd.subprocess, "run", MagicMock())
-    monkeypatch.setattr("openjarvis.speech.voice_io.play_audio_file", fallback)
+    monkeypatch.setattr("jarvis.speech.voice_io.play_audio_file", fallback)
     digest_cmd._play_audio("digest.mp3")
     fallback.assert_not_called()
 
 
 def test_play_audio_reports_fallback_failure(monkeypatch, caplog):
-    from openjarvis.cli import digest_cmd
+    from jarvis.cli import digest_cmd
 
     monkeypatch.setattr(
         digest_cmd.subprocess, "run", MagicMock(side_effect=FileNotFoundError())
     )
     monkeypatch.setattr(
-        "openjarvis.speech.voice_io.play_audio_file",
+        "jarvis.speech.voice_io.play_audio_file",
         MagicMock(side_effect=RuntimeError("no output device")),
     )
     digest_cmd._play_audio("digest.mp3")
@@ -166,7 +166,7 @@ def test_play_audio_reports_fallback_failure(monkeypatch, caplog):
 def test_digest_waits_for_playback_to_finish(tmp_path, monkeypatch, fresh):
     import threading
 
-    from openjarvis.cli import cli, digest_cmd
+    from jarvis.cli import cli, digest_cmd
 
     audio = tmp_path / "digest.wav"
     audio.write_bytes(b"audio")
@@ -194,7 +194,7 @@ def test_digest_waits_for_playback_to_finish(tmp_path, monkeypatch, fresh):
         assert release.wait(3)
 
     monkeypatch.setattr(digest_cmd, "_play_audio", play)
-    monkeypatch.setattr("openjarvis.sdk.Jarvis", MagicMock())
+    monkeypatch.setattr("jarvis.sdk.Jarvis", MagicMock())
 
     def invoke():
         try:
@@ -232,9 +232,9 @@ def test_digest_process_does_not_exit_before_playback_finishes(tmp_path):
         (home / "config.toml").write_text("[analytics]\\nenabled = false\\n")
         audio = root / "digest.wav"
         audio.write_bytes(b"test audio")
-        from openjarvis.agents.digest_store import DigestArtifact, DigestStore
-        from openjarvis.cli import cli
-        module = importlib.import_module("openjarvis.cli.digest_cmd")
+        from jarvis.agents.digest_store import DigestArtifact, DigestStore
+        from jarvis.cli import cli
+        module = importlib.import_module("jarvis.cli.digest_cmd")
         db = str(root / "digest.db")
         with closing(DigestStore(db_path=db)) as store:
             store.save(DigestArtifact(
@@ -254,7 +254,7 @@ def test_digest_process_does_not_exit_before_playback_finishes(tmp_path):
     """)
     root = Path(__file__).resolve().parents[2]
     env = os.environ.copy()
-    env["OPENJARVIS_HOME"] = str(tmp_path / "home")
+    env["JARVIS_HOME"] = str(tmp_path / "home")
     env["PYTHONPATH"] = str(root / "src")
     env["PYTHONIOENCODING"] = "utf-8"
     result = subprocess.run(

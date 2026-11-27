@@ -46,7 +46,7 @@ EOF2
         # allowed range (#476).
         cat > "$target/pyproject.toml" <<EOF2
 [project]
-name = "OpenJarvis"
+name = "Jarvis"
 version = "0.1.1"
 requires-python = ">=3.11,<3.14"
 EOF2

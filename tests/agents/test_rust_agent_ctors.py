@@ -1,4 +1,4 @@
-"""Tests for openjarvis_rust agent constructors and host configuration (#1174)."""
+"""Tests for jarvis_rust agent constructors and host configuration (#1174)."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ import pytest
 
 def test_rust_agent_classes_construct_without_panic():
     """Verify that all 5 Rust agent classes construct without Tokio reactor panic."""
-    openjarvis_rust = pytest.importorskip("openjarvis_rust")
+    jarvis_rust = pytest.importorskip("jarvis_rust")
 
     classes = [
         ("SimpleAgent", "simple", False),
@@ -18,7 +18,7 @@ def test_rust_agent_classes_construct_without_panic():
     ]
 
     for class_name, expected_id, expected_tools in classes:
-        cls = getattr(openjarvis_rust, class_name)
+        cls = getattr(jarvis_rust, class_name)
         agent = cls()
         assert agent.agent_id() == expected_id
         assert agent.accepts_tools() is expected_tools
@@ -26,19 +26,19 @@ def test_rust_agent_classes_construct_without_panic():
 
 def test_rust_agent_classes_accept_custom_host_and_engine():
     """Verify that agent constructors accept explicit host and engine configurations."""
-    openjarvis_rust = pytest.importorskip("openjarvis_rust")
+    jarvis_rust = pytest.importorskip("jarvis_rust")
 
     custom_host = "http://127.0.0.1:9999"
 
     # Default engine (ollama) with custom host
-    simple = openjarvis_rust.SimpleAgent(
+    simple = jarvis_rust.SimpleAgent(
         host=custom_host,
         model="custom-model",
         temperature=0.5,
     )
     assert simple.agent_id() == "simple"
 
-    orch = openjarvis_rust.OrchestratorAgent(
+    orch = jarvis_rust.OrchestratorAgent(
         engine_key="vllm",
         host="http://127.0.0.1:8000",
         model="vllm-model",
@@ -46,7 +46,7 @@ def test_rust_agent_classes_accept_custom_host_and_engine():
     )
     assert orch.agent_id() == "orchestrator"
 
-    react = openjarvis_rust.NativeReActAgent(
+    react = jarvis_rust.NativeReActAgent(
         engine_key="sglang",
         host="http://127.0.0.1:30000",
         model="sglang-model",
@@ -54,7 +54,7 @@ def test_rust_agent_classes_accept_custom_host_and_engine():
     )
     assert react.agent_id() == "native_react"
 
-    openhands = openjarvis_rust.NativeOpenHandsAgent(
+    openhands = jarvis_rust.NativeOpenHandsAgent(
         engine_key="llamacpp",
         host="http://127.0.0.1:8080",
         model="llama-model",
@@ -62,7 +62,7 @@ def test_rust_agent_classes_accept_custom_host_and_engine():
     )
     assert openhands.agent_id() == "native_openhands"
 
-    monitor = openjarvis_rust.MonitorOperativeAgent(
+    monitor = jarvis_rust.MonitorOperativeAgent(
         engine_key="mlx",
         host="http://127.0.0.1:8080",
         model="mlx-model",
@@ -77,16 +77,16 @@ def test_rust_agent_classes_accept_custom_host_and_engine():
 
 def test_rust_agent_invalid_engine_raises_runtime_error():
     """Verify that unsupported engine_key returns an error rather than crashing."""
-    openjarvis_rust = pytest.importorskip("openjarvis_rust")
+    jarvis_rust = pytest.importorskip("jarvis_rust")
 
     with pytest.raises(RuntimeError, match="Unknown engine|not found"):
-        openjarvis_rust.SimpleAgent(engine_key="nonexistent_engine")
+        jarvis_rust.SimpleAgent(engine_key="nonexistent_engine")
 
 
 def test_omitted_host_uses_engine_specific_defaults():
     import inspect
 
-    r = pytest.importorskip("openjarvis_rust")
+    r = pytest.importorskip("jarvis_rust")
     for name in [
         "SimpleAgent",
         "OrchestratorAgent",
@@ -104,7 +104,7 @@ def test_omitted_host_uses_engine_specific_defaults():
 )
 def test_custom_host_receives_generation_request(tmp_path, engine_key, path):
     """Exercise the real extension against a local stub, never a provider API."""
-    pytest.importorskip("openjarvis_rust")
+    pytest.importorskip("jarvis_rust")
 
     import os
     import subprocess
@@ -151,7 +151,7 @@ server.serve_forever()
             "LOCALAPPDATA",
             "APPDATA",
             "LANG",
-            "OPENJARVIS_HOME",
+            "JARVIS_HOME",
         }
     }
     env["NO_PROXY"] = "127.0.0.1,localhost"
@@ -172,7 +172,7 @@ server.serve_forever()
         assert port_file.exists(), "Local stub failed to start"
         host = f"http://127.0.0.1:{port_file.read_text()}"
         code = (
-            "import sys,openjarvis_rust as r; "
+            "import sys,jarvis_rust as r; "
             "agent=r.SimpleAgent(engine_key=sys.argv[1],host=sys.argv[2],"
             "model='host-probe'); print(agent.run('probe').content)"
         )

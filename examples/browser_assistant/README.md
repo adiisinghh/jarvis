@@ -1,11 +1,11 @@
 # Browser Assistant
 
-A web browsing agent that uses OpenJarvis's orchestrator loop with browser,
+A web browsing agent that uses Jarvis's orchestrator loop with browser,
 web_search, and think tools to find and synthesize information from the web.
 
 ## Requirements
 
-- OpenJarvis installed (`git clone https://github.com/open-jarvis/OpenJarvis.git && cd OpenJarvis && uv sync` or `uv sync --extra dev`)
+- Jarvis installed (`git clone https://github.com/adiisinghh/jarvis.git && cd Jarvis && uv sync` or `uv sync --extra dev`)
 - An inference engine running (Ollama, cloud API, vLLM, etc.)
 
 ## Usage

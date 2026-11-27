@@ -8,12 +8,12 @@ from pathlib import Path
 
 import pytest
 
-from openjarvis.core.types import Trace
+from jarvis.core.types import Trace
 
 
 @pytest.fixture
 def store():
-    from openjarvis.traces.store import TraceStore
+    from jarvis.traces.store import TraceStore
 
     with tempfile.TemporaryDirectory() as tmpdir:
         s = TraceStore(Path(tmpdir) / "traces.db")
@@ -214,7 +214,7 @@ class TestFTSDeleteSync:
 
     def test_stale_index_from_an_older_database_is_rebuilt(self, tmp_path):
         """A database written before the triggers existed is repaired on open."""
-        from openjarvis.traces.store import (
+        from jarvis.traces.store import (
             _CREATE_FTS,
             _CREATE_STEPS,
             _CREATE_TRACES,

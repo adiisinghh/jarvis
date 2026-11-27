@@ -1,4 +1,4 @@
-"""X-OpenJarvis-Timezone is visible to code handling the request."""
+"""X-Jarvis-Timezone is visible to code handling the request."""
 
 from __future__ import annotations
 
@@ -10,12 +10,12 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from openjarvis.prompt.time_context import (
+from jarvis.prompt.time_context import (
     reset_request_timezone,
     resolve_timezone,
     set_request_timezone,
 )
-from openjarvis.server.timezone_middleware import TimezoneMiddleware
+from jarvis.server.timezone_middleware import TimezoneMiddleware
 
 
 def _app() -> FastAPI:
@@ -33,30 +33,30 @@ def _app() -> FastAPI:
 
 def test_header_sets_zone_for_the_request() -> None:
     client = TestClient(_app())
-    r = client.get("/tz", headers={"X-OpenJarvis-Timezone": "Africa/Cairo"})
+    r = client.get("/tz", headers={"X-Jarvis-Timezone": "Africa/Cairo"})
     assert r.json() == {"zone": "Africa/Cairo"}
 
 
 def test_missing_or_bad_header_falls_back_to_config(monkeypatch) -> None:
     client = TestClient(_app())
     assert client.get("/tz").json() == {"zone": "Europe/Paris"}
-    bad = client.get("/tz", headers={"X-OpenJarvis-Timezone": "Mars/Base"})
+    bad = client.get("/tz", headers={"X-Jarvis-Timezone": "Mars/Base"})
     assert bad.json() == {"zone": "Europe/Paris"}
 
 
 def test_previous_request_cannot_override_the_configured_zone() -> None:
     client = TestClient(_app())
     assert client.get(
-        "/tz", headers={"X-OpenJarvis-Timezone": "Asia/Tokyo"}
+        "/tz", headers={"X-Jarvis-Timezone": "Asia/Tokyo"}
     ).json() == {"zone": "Asia/Tokyo"}
     assert client.get("/tz").json() == {"zone": "Europe/Paris"}
-    assert client.get("/tz", headers={"X-OpenJarvis-Timezone": "Mars/Base"}).json() == {
+    assert client.get("/tz", headers={"X-Jarvis-Timezone": "Mars/Base"}).json() == {
         "zone": "Europe/Paris"
     }
 
 
 def test_managed_workers_keep_their_own_request_context() -> None:
-    from openjarvis.server.agent_manager_routes import _start_managed_worker
+    from jarvis.server.agent_manager_routes import _start_managed_worker
 
     state = SimpleNamespace()
     release = threading.Event()
@@ -94,8 +94,8 @@ async def test_concurrent_requests_keep_their_own_zone() -> None:
     transport = httpx.ASGITransport(app=_app())
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         responses = await asyncio.gather(
-            client.get("/tz", headers={"X-OpenJarvis-Timezone": "Asia/Tokyo"}),
-            client.get("/tz", headers={"X-OpenJarvis-Timezone": "Africa/Cairo"}),
+            client.get("/tz", headers={"X-Jarvis-Timezone": "Asia/Tokyo"}),
+            client.get("/tz", headers={"X-Jarvis-Timezone": "Africa/Cairo"}),
             client.get("/tz"),
         )
     assert [r.json()["zone"] for r in responses] == [

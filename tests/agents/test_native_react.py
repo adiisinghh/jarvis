@@ -7,12 +7,12 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from openjarvis.agents._stubs import AgentContext
-from openjarvis.agents.native_react import NativeReActAgent
-from openjarvis.core.events import EventBus, EventType
-from openjarvis.core.registry import AgentRegistry
-from openjarvis.core.types import Conversation, Message, Role, ToolResult
-from openjarvis.tools._stubs import BaseTool, ToolSpec
+from jarvis.agents._stubs import AgentContext
+from jarvis.agents.native_react import NativeReActAgent
+from jarvis.core.events import EventBus, EventType
+from jarvis.core.registry import AgentRegistry
+from jarvis.core.types import Conversation, Message, Role, ToolResult
+from jarvis.tools._stubs import BaseTool, ToolSpec
 
 # ---------------------------------------------------------------------------
 # Helpers

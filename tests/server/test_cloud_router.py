@@ -9,8 +9,8 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from openjarvis.core.types import Message
-from openjarvis.server import cloud_router
+from jarvis.core.types import Message
+from jarvis.server import cloud_router
 
 
 @pytest.mark.parametrize(
@@ -162,12 +162,12 @@ async def test_cloud_key_file_is_utf8_with_windows_default_encoding(
         monkeypatch.setattr(cloud_router, "_CLOUD_ENV_FILE", env_file)
         keys = cloud_router._load_keys()
     else:
-        from openjarvis.server import routes
+        from jarvis.server import routes
 
         monkeypatch.setattr(routes, "get_config_dir", lambda: tmp_path)
         cloud = MagicMock()
         cloud.health.return_value = False
-        monkeypatch.setattr("openjarvis.engine.cloud.CloudEngine", lambda: cloud)
+        monkeypatch.setattr("jarvis.engine.cloud.CloudEngine", lambda: cloud)
         request = SimpleNamespace(json=AsyncMock(return_value={}))
         result = await routes.reload_cloud_engine(request)
         assert result["status"] == "no_cloud"

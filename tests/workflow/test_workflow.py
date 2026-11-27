@@ -4,11 +4,11 @@ from __future__ import annotations
 
 import pytest
 
-from openjarvis.core.events import EventBus, EventType
-from openjarvis.workflow.builder import WorkflowBuilder
-from openjarvis.workflow.engine import WorkflowEngine
-from openjarvis.workflow.graph import WorkflowGraph
-from openjarvis.workflow.types import NodeType, WorkflowEdge, WorkflowNode
+from jarvis.core.events import EventBus, EventType
+from jarvis.workflow.builder import WorkflowBuilder
+from jarvis.workflow.engine import WorkflowEngine
+from jarvis.workflow.graph import WorkflowGraph
+from jarvis.workflow.types import NodeType, WorkflowEdge, WorkflowNode
 
 
 class TestWorkflowGraph:

@@ -1,0 +1,32 @@
+[package]
+name = "jarvis-python"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "jarvis_rust"
+crate-type = ["cdylib"]
+
+[dependencies]
+jarvis-core = { path = "../jarvis-core" }
+jarvis-engine = { path = "../jarvis-engine" }
+jarvis-security = { path = "../jarvis-security" }
+jarvis-tools = { path = "../jarvis-tools" }
+jarvis-agents = { path = "../jarvis-agents" }
+jarvis-traces = { path = "../jarvis-traces" }
+jarvis-telemetry = { path = "../jarvis-telemetry" }
+jarvis-learning = { path = "../jarvis-learning" }
+jarvis-mcp = { path = "../jarvis-mcp" }
+jarvis-sessions = { path = "../jarvis-sessions" }
+jarvis-workflow = { path = "../jarvis-workflow" }
+jarvis-skills = { path = "../jarvis-skills" }
+jarvis-recipes = { path = "../jarvis-recipes" }
+jarvis-templates = { path = "../jarvis-templates" }
+jarvis-a2a = { path = "../jarvis-a2a" }
+jarvis-scheduler = { path = "../jarvis-scheduler" }
+pyo3 = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+once_cell = { workspace = true }
+parking_lot = { workspace = true }

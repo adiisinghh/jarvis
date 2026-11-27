@@ -124,8 +124,8 @@ def lock_packages(path: Path, scope: str) -> list[dict]:
         source = package.get("source")
         if scope == "uv.lock":
             own_projects = {
-                "openjarvis": {"editable": "."},
-                "openjarvis-rust": {"directory": "rust/crates/openjarvis-python"},
+                "jarvis": {"editable": "."},
+                "jarvis-rust": {"directory": "rust/crates/jarvis-python"},
             }
             name = package["name"].lower()
             if name in own_projects and own_projects[name] == source:

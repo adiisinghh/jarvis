@@ -9,12 +9,12 @@ from unittest.mock import MagicMock, patch
 import pytest
 from click.testing import CliRunner
 
-from openjarvis.agents._stubs import AgentContext, AgentResult, ToolUsingAgent
-from openjarvis.cli import cli
-from openjarvis.core.types import Role, StepType, ToolCall, ToolResult
-from openjarvis.tools._stubs import BaseTool, ToolSpec
+from jarvis.agents._stubs import AgentContext, AgentResult, ToolUsingAgent
+from jarvis.cli import cli
+from jarvis.core.types import Role, StepType, ToolCall, ToolResult
+from jarvis.tools._stubs import BaseTool, ToolSpec
 
-_ask_mod = importlib.import_module("openjarvis.cli.ask")
+_ask_mod = importlib.import_module("jarvis.cli.ask")
 
 
 def _mock_engine(content="Hello from engine"):
@@ -34,9 +34,9 @@ def _mock_engine(content="Hello from engine"):
 
 def _register_agents():
     """Re-register agents after registry clear."""
-    from openjarvis.agents.orchestrator import OrchestratorAgent
-    from openjarvis.agents.simple import SimpleAgent
-    from openjarvis.core.registry import AgentRegistry
+    from jarvis.agents.orchestrator import OrchestratorAgent
+    from jarvis.agents.simple import SimpleAgent
+    from jarvis.core.registry import AgentRegistry
 
     for name, cls in [
         ("simple", SimpleAgent),
@@ -48,12 +48,12 @@ def _register_agents():
 
 def _register_tools():
     """Re-register tools after registry clear."""
-    from openjarvis.core.registry import ToolRegistry
-    from openjarvis.tools.calculator import CalculatorTool
-    from openjarvis.tools.file_read import FileReadTool
-    from openjarvis.tools.llm_tool import LLMTool
-    from openjarvis.tools.retrieval import RetrievalTool
-    from openjarvis.tools.think import ThinkTool
+    from jarvis.core.registry import ToolRegistry
+    from jarvis.tools.calculator import CalculatorTool
+    from jarvis.tools.file_read import FileReadTool
+    from jarvis.tools.llm_tool import LLMTool
+    from jarvis.tools.retrieval import RetrievalTool
+    from jarvis.tools.think import ThinkTool
 
     for name, cls in [
         ("calculator", CalculatorTool),
@@ -107,8 +107,8 @@ class _EngineSetup:
 
 @pytest.fixture
 def agent_setup():
-    from openjarvis.core.config import JarvisConfig
-    from openjarvis.core.registry import AgentRegistry, ToolRegistry
+    from jarvis.core.config import JarvisConfig
+    from jarvis.core.registry import AgentRegistry, ToolRegistry
 
     engine = _mock_engine("unused")
     config = JarvisConfig()
@@ -153,7 +153,7 @@ def mock_setup():
         patch.object(_ask_mod, "register_builtin_models"),
         patch.object(_ask_mod, "merge_discovered_models"),
     ):
-        from openjarvis.core.config import JarvisConfig
+        from jarvis.core.config import JarvisConfig
 
         config = JarvisConfig()
         config.traces.enabled = False
@@ -239,7 +239,7 @@ class TestAskAgentOption:
     ):
         """When config's ``default_agent`` is blank and --agent is omitted,
         the original direct-to-engine path is preserved."""
-        from openjarvis.core.config import JarvisConfig
+        from jarvis.core.config import JarvisConfig
 
         cfg = JarvisConfig()
         cfg.traces.enabled = False
@@ -297,8 +297,8 @@ class TestAskSkillsAndTraces:
         runner,
         tmp_path,
     ):
-        from openjarvis.core.config import JarvisConfig
-        from openjarvis.traces.store import TraceStore
+        from jarvis.core.config import JarvisConfig
+        from jarvis.traces.store import TraceStore
 
         skill_dir = tmp_path / "skills" / "hermes" / "llm-wiki"
         skill_dir.mkdir(parents=True)
@@ -399,8 +399,8 @@ class TestAskSkillsAndTraces:
 
 class TestBuildTools:
     def test_build_calculator(self, mock_setup):
-        from openjarvis.cli.ask import _build_tools
-        from openjarvis.core.config import JarvisConfig
+        from jarvis.cli.ask import _build_tools
+        from jarvis.core.config import JarvisConfig
 
         _register_tools()
         config = JarvisConfig()
@@ -409,8 +409,8 @@ class TestBuildTools:
         assert tools[0].tool_id == "calculator"
 
     def test_build_think(self, mock_setup):
-        from openjarvis.cli.ask import _build_tools
-        from openjarvis.core.config import JarvisConfig
+        from jarvis.cli.ask import _build_tools
+        from jarvis.core.config import JarvisConfig
 
         _register_tools()
         config = JarvisConfig()
@@ -419,24 +419,24 @@ class TestBuildTools:
         assert tools[0].tool_id == "think"
 
     def test_build_unknown_tool_skipped(self, mock_setup):
-        from openjarvis.cli.ask import _build_tools
-        from openjarvis.core.config import JarvisConfig
+        from jarvis.cli.ask import _build_tools
+        from jarvis.core.config import JarvisConfig
 
         config = JarvisConfig()
         tools = _build_tools(["nonexistent"], config, mock_setup, "test-model")
         assert len(tools) == 0
 
     def test_build_empty_names(self, mock_setup):
-        from openjarvis.cli.ask import _build_tools
-        from openjarvis.core.config import JarvisConfig
+        from jarvis.cli.ask import _build_tools
+        from jarvis.core.config import JarvisConfig
 
         config = JarvisConfig()
         tools = _build_tools(["", " "], config, mock_setup, "test-model")
         assert len(tools) == 0
 
     def test_build_multiple_tools(self, mock_setup):
-        from openjarvis.cli.ask import _build_tools
-        from openjarvis.core.config import JarvisConfig
+        from jarvis.cli.ask import _build_tools
+        from jarvis.core.config import JarvisConfig
 
         _register_tools()
         config = JarvisConfig()
@@ -456,7 +456,7 @@ class TestPersonaFilesReachModel:
         self, runner, monkeypatch, tmp_path
     ):
         """SOUL.md content must appear in the system message sent to the engine."""
-        from openjarvis.core.config import JarvisConfig
+        from jarvis.core.config import JarvisConfig
 
         # Write a SOUL.md with a unique sentinel string we can grep for
         soul = tmp_path / "SOUL.md"
@@ -511,7 +511,7 @@ class TestPersonaFilesReachModel:
         self, runner, monkeypatch, tmp_path
     ):
         """Orchestrator explicitly accepts and applies persona wiring."""
-        from openjarvis.core.config import JarvisConfig
+        from jarvis.core.config import JarvisConfig
 
         soul = tmp_path / "SOUL.md"
         soul.write_text("ORCH_PERSONA_SENTINEL", encoding="utf-8")
@@ -546,11 +546,11 @@ class _StopAfterMcpLoad(Exception):
 
 def test_ask_resolves_mcp_servers_file_against_config_dir(tmp_path, monkeypatch):
     """A file-based ``servers`` value is resolved next to the loaded config."""
-    from openjarvis.core.config import JarvisConfig
-    from openjarvis.core.events import EventBus
-    from openjarvis.core.registry import AgentRegistry
+    from jarvis.core.config import JarvisConfig
+    from jarvis.core.events import EventBus
+    from jarvis.core.registry import AgentRegistry
 
-    ask_module = importlib.import_module("openjarvis.cli.ask")
+    ask_module = importlib.import_module("jarvis.cli.ask")
     AgentRegistry.register_value("mcp_config_dir_agent", _ConfirmingAgent)
     seen = {}
 
@@ -558,7 +558,7 @@ def test_ask_resolves_mcp_servers_file_against_config_dir(tmp_path, monkeypatch)
         seen.update(kwargs)
         raise _StopAfterMcpLoad
 
-    monkeypatch.setattr("openjarvis.mcp.loader.load_mcp_tools_from_config", fake_loader)
+    monkeypatch.setattr("jarvis.mcp.loader.load_mcp_tools_from_config", fake_loader)
     config = JarvisConfig()
     config._config_dir = tmp_path
 

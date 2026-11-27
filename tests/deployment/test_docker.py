@@ -132,9 +132,9 @@ class TestDockerFiles:
         ]
         required_markers = [
             "maturin build --release",
-            "rust/crates/openjarvis-python/Cargo.toml",
-            "/tmp/openjarvis-rust-wheel/*.whl",
-            "import openjarvis_rust",
+            "rust/crates/jarvis-python/Cargo.toml",
+            "/tmp/jarvis-rust-wheel/*.whl",
+            "import jarvis_rust",
         ]
         workspace = tomllib.loads((ROOT / "rust" / "Cargo.toml").read_text())
         rust_version = workspace["workspace"]["package"]["rust-version"]
@@ -158,7 +158,7 @@ class TestDockerFiles:
             ), f"{name}: rust workspace copied after native build"
 
     def test_systemd_service_exists(self):
-        assert (SYSTEMD_DIR / "openjarvis.service").is_file()
+        assert (SYSTEMD_DIR / "jarvis.service").is_file()
 
 
 class TestImagePinning:
@@ -278,7 +278,7 @@ class TestSystemdHardening:
     """#564 — systemd unit ships secrets via EnvironmentFile and is sandboxed."""
 
     def _service(self) -> str:
-        return (SYSTEMD_DIR / "openjarvis.service").read_text()
+        return (SYSTEMD_DIR / "jarvis.service").read_text()
 
     def test_environment_file_for_secrets(self):
         assert "EnvironmentFile=" in self._service()

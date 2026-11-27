@@ -8,10 +8,10 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from openjarvis.core.events import EventBus, EventType
-from openjarvis.core.types import TOKEN_COUNTING_VERSION, Message, Role
-from openjarvis.engine._stubs import StreamChunk
-from openjarvis.telemetry.instrumented_engine import InstrumentedEngine
+from jarvis.core.events import EventBus, EventType
+from jarvis.core.types import TOKEN_COUNTING_VERSION, Message, Role
+from jarvis.engine._stubs import StreamChunk
+from jarvis.telemetry.instrumented_engine import InstrumentedEngine
 
 
 @pytest.mark.asyncio
@@ -21,7 +21,7 @@ async def test_duration_clock_does_not_replace_wall_timestamp(
 ):
     ticks = iter((100.0, 100.001, 100.002, 100.003))
     clock = SimpleNamespace(time=lambda: 1700000000.0, perf_counter=lambda: next(ticks))
-    monkeypatch.setattr("openjarvis.telemetry.instrumented_engine.time", clock)
+    monkeypatch.setattr("jarvis.telemetry.instrumented_engine.time", clock)
 
     async def stream(*args, **kwargs):
         yield "Hello"
@@ -424,7 +424,7 @@ class TestTokensPerJoule:
 
     def test_tokens_per_joule_formula_via_record(self):
         """Verify the formula: tokens_per_joule = completion_tokens / energy_joules."""
-        from openjarvis.core.types import TelemetryRecord
+        from jarvis.core.types import TelemetryRecord
 
         # Direct construction — verifies the field accepts computed values
         rec = TelemetryRecord(
@@ -438,7 +438,7 @@ class TestTokensPerJoule:
 
     def test_tokens_per_joule_zero_when_no_tokens(self):
         """tokens_per_joule is 0.0 when completion_tokens is 0."""
-        from openjarvis.core.types import TelemetryRecord
+        from jarvis.core.types import TelemetryRecord
 
         rec = TelemetryRecord(
             timestamp=1.0,

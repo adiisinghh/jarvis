@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from openjarvis.cli.serve import _resolve_allowed_tools, _resolve_server_cors_origins
-from openjarvis.core.config import JarvisConfig
+from jarvis.cli.serve import _resolve_allowed_tools, _resolve_server_cors_origins
+from jarvis.core.config import JarvisConfig
 
 
 @pytest.mark.parametrize(
@@ -55,7 +55,7 @@ def test_serve_defaults_tools_when_no_selection_is_configured():
 
 def test_cors_environment_overrides_configured_defaults(monkeypatch):
     monkeypatch.setenv(
-        "OPENJARVIS_CORS_ORIGINS",
+        "JARVIS_CORS_ORIGINS",
         " https://frontend.example, https://admin.example ",
     )
 
@@ -65,7 +65,7 @@ def test_cors_environment_overrides_configured_defaults(monkeypatch):
 
 
 def test_cors_config_is_used_without_environment(monkeypatch):
-    monkeypatch.delenv("OPENJARVIS_CORS_ORIGINS", raising=False)
+    monkeypatch.delenv("JARVIS_CORS_ORIGINS", raising=False)
 
     origins = _resolve_server_cors_origins(["http://localhost:5173"])
 
@@ -77,14 +77,14 @@ def _repopulate_cli_registries() -> None:
     import importlib
     import sys
 
-    import openjarvis.agents  # noqa: F401
-    import openjarvis.tools  # noqa: F401
-    import openjarvis.tools.storage  # noqa: F401
-    from openjarvis.core.registry import AgentRegistry, MemoryRegistry, ToolRegistry
+    import jarvis.agents  # noqa: F401
+    import jarvis.tools  # noqa: F401
+    import jarvis.tools.storage  # noqa: F401
+    from jarvis.core.registry import AgentRegistry, MemoryRegistry, ToolRegistry
 
     if not AgentRegistry.keys():
         for mod_name in list(sys.modules):
-            if mod_name.startswith("openjarvis.agents.") and not mod_name.endswith(
+            if mod_name.startswith("jarvis.agents.") and not mod_name.endswith(
                 "_stubs"
             ):
                 try:
@@ -95,7 +95,7 @@ def _repopulate_cli_registries() -> None:
     if not ToolRegistry.keys():
         for mod_name in list(sys.modules):
             if (
-                mod_name.startswith("openjarvis.tools.")
+                mod_name.startswith("jarvis.tools.")
                 and not mod_name.endswith("_stubs")
                 and not mod_name.endswith("agent_tools")
             ):
@@ -107,7 +107,7 @@ def _repopulate_cli_registries() -> None:
     if not MemoryRegistry.keys():
         for mod_name in list(sys.modules):
             if mod_name.startswith(
-                "openjarvis.tools.storage."
+                "jarvis.tools.storage."
             ) and not mod_name.endswith("_stubs"):
                 try:
                     importlib.reload(sys.modules[mod_name])
@@ -118,8 +118,8 @@ def _repopulate_cli_registries() -> None:
 def test_build_serve_tools_wires_memory_llm_and_channel_deps():
     from unittest.mock import MagicMock
 
-    from openjarvis.cli.serve import _build_serve_tools
-    from openjarvis.tools.storage._stubs import MemoryBackend, RetrievalResult
+    from jarvis.cli.serve import _build_serve_tools
+    from jarvis.tools.storage._stubs import MemoryBackend, RetrievalResult
 
     class _InMemoryBackend(MemoryBackend):
         backend_id = "in-memory-test"
@@ -201,11 +201,11 @@ def test_serve_injects_memory_and_channel_backends_into_resolved_tools(
     pytest.importorskip("fastapi")
     pytest.importorskip("uvicorn")
 
-    from openjarvis.cli import cli
-    from openjarvis.core.registry import MemoryRegistry
-    from openjarvis.system import JarvisSystem
+    from jarvis.cli import cli
+    from jarvis.core.registry import MemoryRegistry
+    from jarvis.system import JarvisSystem
 
-    serve_mod = importlib.import_module("openjarvis.cli.serve")
+    serve_mod = importlib.import_module("jarvis.cli.serve")
     _repopulate_cli_registries()
 
     config = JarvisConfig()
@@ -241,7 +241,7 @@ def test_serve_injects_memory_and_channel_backends_into_resolved_tools(
     monkeypatch.setattr(serve_mod, "discover_engines", lambda *a, **k: {})
     monkeypatch.setattr(serve_mod, "discover_models", lambda *a, **k: {})
     monkeypatch.setattr(
-        "openjarvis.system.builder.SystemBuilder._resolve_channel",
+        "jarvis.system.builder.SystemBuilder._resolve_channel",
         lambda *args, **kwargs: channel_backend,
     )
 
@@ -250,7 +250,7 @@ def test_serve_injects_memory_and_channel_backends_into_resolved_tools(
     sec.capability_policy = None
     sec.rate_limiter = None
     sec.audit_logger = None
-    monkeypatch.setattr("openjarvis.security.setup_security", lambda *a, **k: sec)
+    monkeypatch.setattr("jarvis.security.setup_security", lambda *a, **k: sec)
 
     captured: dict = {}
 
@@ -261,8 +261,8 @@ def test_serve_injects_memory_and_channel_backends_into_resolved_tools(
     create_app = MagicMock(return_value=MagicMock())
 
     with (
-        patch("openjarvis.server.app.create_app", create_app),
-        patch("openjarvis.server.daemon.run_server", lambda *a, **k: None),
+        patch("jarvis.server.app.create_app", create_app),
+        patch("jarvis.server.daemon.run_server", lambda *a, **k: None),
     ):
         result = CliRunner().invoke(cli, ["serve"], catch_exceptions=False)
 

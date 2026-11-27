@@ -6,14 +6,14 @@
 FROM node:22.23.0-slim@sha256:d9f850096136edbc402debdd8729579a288aac64574ada0ff4db26b6ae58b0b2 AS frontend
 # Public Supabase anon key for the savings leaderboard; empty by default so
 # the image's leaderboard stays disabled (#589). Pass --build-arg to enable.
-ARG OPENJARVIS_LEADERBOARD_PUBLIC_ANON=
+ARG JARVIS_LEADERBOARD_PUBLIC_ANON=
 
 WORKDIR /frontend
 COPY frontend/package.json frontend/package-lock.json frontend/.npmrc ./
 RUN npm install --global "$(node -p 'require("./package.json").packageManager')" && \
     npm ci --ignore-scripts
 COPY frontend/ .
-RUN VITE_SUPABASE_ANON_KEY="${OPENJARVIS_LEADERBOARD_PUBLIC_ANON}" npm run build
+RUN VITE_SUPABASE_ANON_KEY="${JARVIS_LEADERBOARD_PUBLIC_ANON}" npm run build
 
 # Stage 2: Build Python package
 FROM python:3.12.16-slim-bookworm@sha256:935c3c5b12357a7e10caa9c1e6ca5692344d97cf229832ef584be2cec9fc03df AS builder
@@ -48,21 +48,21 @@ COPY src/ src/
 COPY rust/ rust/
 COPY scripts/install scripts/install
 COPY deploy/windows deploy/windows
-COPY configs/openjarvis/examples configs/openjarvis/examples
+COPY configs/jarvis/examples configs/jarvis/examples
 
 # Copy built frontend into the server static directory
-COPY --from=frontend /src/openjarvis/server/static src/openjarvis/server/static/
+COPY --from=frontend /src/jarvis/server/static src/jarvis/server/static/
 
 # Install the project itself without re-resolving dependencies.
 RUN uv pip install --system --no-deps . && \
     maturin build --release \
-        --manifest-path rust/crates/openjarvis-python/Cargo.toml \
+        --manifest-path rust/crates/jarvis-python/Cargo.toml \
         --interpreter python3 \
-        --out /tmp/openjarvis-rust-wheel && \
-    uv pip install --system --no-deps /tmp/openjarvis-rust-wheel/*.whl && \
-    python3 -c "import openjarvis_rust; print('openjarvis_rust ok')" && \
+        --out /tmp/jarvis-rust-wheel && \
+    uv pip install --system --no-deps /tmp/jarvis-rust-wheel/*.whl && \
+    python3 -c "import jarvis_rust; print('jarvis_rust ok')" && \
     python3 -m pip uninstall -y maturin && \
-    rm -rf /tmp/openjarvis-rust-wheel rust
+    rm -rf /tmp/jarvis-rust-wheel rust
 
 # Stage 3: Runtime
 FROM python:3.12.16-slim-bookworm@sha256:935c3c5b12357a7e10caa9c1e6ca5692344d97cf229832ef584be2cec9fc03df
@@ -74,11 +74,11 @@ WORKDIR /app
 # Run as an unprivileged user — the server needs no root privileges, so dropping
 # them limits the blast radius of a compromise (#565). The app writes only to
 # $HOME (config/cache/state), which is owned by this user.
-RUN groupadd --system --gid 10001 openjarvis && \
-    useradd --system --uid 10001 --gid openjarvis \
-        --create-home --home-dir /home/openjarvis openjarvis
-ENV HOME=/home/openjarvis
-USER openjarvis
+RUN groupadd --system --gid 10001 jarvis && \
+    useradd --system --uid 10001 --gid jarvis \
+        --create-home --home-dir /home/jarvis jarvis
+ENV HOME=/home/jarvis
+USER jarvis
 
 EXPOSE 8000
 

@@ -6,13 +6,13 @@ from pathlib import Path
 
 from click.testing import CliRunner
 
-from openjarvis.cli.doctor_cmd import doctor
+from jarvis.cli.doctor_cmd import doctor
 
 
 def test_doctor_shows_bg_section_when_state_present(
-    tmp_openjarvis_home: Path, write_model_marker
+    tmp_jarvis_home: Path, write_model_marker
 ) -> None:
-    (tmp_openjarvis_home / ".state" / "extension-built").write_text("")
+    (tmp_jarvis_home / ".state" / "extension-built").write_text("")
     write_model_marker("qwen3.5:9b", "ready")
     runner = CliRunner()
     result = runner.invoke(doctor, [], catch_exceptions=False)
@@ -22,8 +22,8 @@ def test_doctor_shows_bg_section_when_state_present(
     assert "ready" in result.output
 
 
-def test_doctor_exit_code_when_bg_failed(tmp_openjarvis_home: Path) -> None:
-    (tmp_openjarvis_home / ".state" / "extension-failed").write_text("oom")
+def test_doctor_exit_code_when_bg_failed(tmp_jarvis_home: Path) -> None:
+    (tmp_jarvis_home / ".state" / "extension-failed").write_text("oom")
     runner = CliRunner()
     result = runner.invoke(doctor, [], catch_exceptions=False)
     # Doctor should exit non-zero when any bg task is failed.
@@ -31,7 +31,7 @@ def test_doctor_exit_code_when_bg_failed(tmp_openjarvis_home: Path) -> None:
     assert "failed" in result.output.lower()
 
 
-def test_doctor_no_bg_section_when_state_dir_empty(tmp_openjarvis_home: Path) -> None:
+def test_doctor_no_bg_section_when_state_dir_empty(tmp_jarvis_home: Path) -> None:
     """Empty .state/ — section still appears but reports 'no background tasks'."""
     runner = CliRunner()
     result = runner.invoke(doctor, [], catch_exceptions=False)

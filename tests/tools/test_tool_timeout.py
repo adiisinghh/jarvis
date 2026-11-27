@@ -9,9 +9,9 @@ import threading
 import time
 from pathlib import Path
 
-from openjarvis.core.events import EventBus, EventType
-from openjarvis.core.types import ToolCall, ToolResult
-from openjarvis.tools._stubs import _MAX_TOOL_WORKERS, BaseTool, ToolExecutor, ToolSpec
+from jarvis.core.events import EventBus, EventType
+from jarvis.core.types import ToolCall, ToolResult
+from jarvis.tools._stubs import _MAX_TOOL_WORKERS, BaseTool, ToolExecutor, ToolSpec
 
 
 class SlowTool(BaseTool):
@@ -149,7 +149,7 @@ class TestToolTimeout:
             return {
                 thread
                 for thread in threading.enumerate()
-                if thread.name.startswith("openjarvis-tool-")
+                if thread.name.startswith("jarvis-tool-")
             }
 
         # Workers left by earlier tests may still be alive, so count only new ones.
@@ -174,8 +174,8 @@ class TestToolTimeout:
         env = {**os.environ, "PYTHONPATH": str(source_root)}
         script = """
 import threading
-from openjarvis.core.types import ToolCall, ToolResult
-from openjarvis.tools._stubs import BaseTool, ToolExecutor, ToolSpec
+from jarvis.core.types import ToolCall, ToolResult
+from jarvis.tools._stubs import BaseTool, ToolExecutor, ToolSpec
 
 block = threading.Event()
 class BlockingTool(BaseTool):

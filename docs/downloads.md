@@ -1,23 +1,23 @@
 ---
 title: Downloads
-description: Download the OpenJarvis desktop app, browser app, CLI, or Python SDK
+description: Download the Jarvis desktop app, browser app, CLI, or Python SDK
 ---
 
 # Downloads
 
-OpenJarvis runs entirely on your hardware. Choose the interface that fits your workflow.
+Jarvis runs entirely on your hardware. Choose the interface that fits your workflow.
 
 ---
 
 ## Desktop App
 
-The desktop app is a native window for the OpenJarvis chat UI. All inference and backend
+The desktop app is a native window for the Jarvis chat UI. All inference and backend
 processing happens on your local machine — the app connects to the backend you start locally.
 
 !!! info "Backend required"
     Start the backend before opening the desktop app. The quickstart script handles everything:
     ```bash
-    git clone https://github.com/open-jarvis/OpenJarvis.git && cd OpenJarvis
+    git clone https://github.com/adiisinghh/jarvis.git && cd Jarvis
     ./scripts/quickstart.sh
     ```
 
@@ -25,31 +25,31 @@ processing happens on your local machine — the app connects to the backend you
 
 | Platform | Download | Notes |
 |----------|----------|-------|
-| macOS (Universal) | [:material-download: **OpenJarvis.dmg**](https://github.com/open-jarvis/OpenJarvis/releases/latest/download/OpenJarvis_universal.dmg) | Apple Silicon + Intel |
-| Windows (x64) | [:material-download: **OpenJarvis-setup.exe**](https://github.com/open-jarvis/OpenJarvis/releases/latest/download/OpenJarvis_x64-setup.exe) | Windows 10+ |
-| Windows (ARM64) | [:material-download: **OpenJarvis-arm64-setup.exe**](https://github.com/open-jarvis/OpenJarvis/releases/latest/download/OpenJarvis_arm64-setup.exe) | Windows 11 on ARM |
-| Linux (DEB) | [:material-download: **OpenJarvis.deb**](https://github.com/open-jarvis/OpenJarvis/releases/latest/download/OpenJarvis_amd64.deb) | Ubuntu, Debian |
-| Linux (RPM) | [:material-download: **OpenJarvis.rpm**](https://github.com/open-jarvis/OpenJarvis/releases/latest/download/OpenJarvis_x86_64.rpm) | Fedora, RHEL |
-| Linux (AppImage) | [:material-download: **OpenJarvis.AppImage**](https://github.com/open-jarvis/OpenJarvis/releases/latest/download/OpenJarvis_amd64.AppImage) | Any distro |
+| macOS (Universal) | [:material-download: **Jarvis.dmg**](https://github.com/adiisinghh/jarvis/releases/latest/download/Jarvis_universal.dmg) | Apple Silicon + Intel |
+| Windows (x64) | [:material-download: **Jarvis-setup.exe**](https://github.com/adiisinghh/jarvis/releases/latest/download/Jarvis_x64-setup.exe) | Windows 10+ |
+| Windows (ARM64) | [:material-download: **Jarvis-arm64-setup.exe**](https://github.com/adiisinghh/jarvis/releases/latest/download/Jarvis_arm64-setup.exe) | Windows 11 on ARM |
+| Linux (DEB) | [:material-download: **Jarvis.deb**](https://github.com/adiisinghh/jarvis/releases/latest/download/Jarvis_amd64.deb) | Ubuntu, Debian |
+| Linux (RPM) | [:material-download: **Jarvis.rpm**](https://github.com/adiisinghh/jarvis/releases/latest/download/Jarvis_x86_64.rpm) | Fedora, RHEL |
+| Linux (AppImage) | [:material-download: **Jarvis.AppImage**](https://github.com/adiisinghh/jarvis/releases/latest/download/Jarvis_amd64.AppImage) | Any distro |
 
 !!! tip "All releases"
-    Browse all versions on the [GitHub Releases](https://github.com/open-jarvis/OpenJarvis/releases) page.
+    Browse all versions on the [GitHub Releases](https://github.com/adiisinghh/jarvis/releases) page.
 
 ### macOS: "app is damaged" fix
 
 macOS Gatekeeper quarantines apps downloaded from the internet that aren't notarized
-by Apple. If you see **"OpenJarvis is damaged and can't be opened"**, run this in
+by Apple. If you see **"Jarvis is damaged and can't be opened"**, run this in
 Terminal to clear the quarantine flag:
 
 ```bash
-xattr -cr /Applications/OpenJarvis.app
+xattr -cr /Applications/Jarvis.app
 ```
 
 Then open the app normally. If you installed from the DMG but haven't moved it to
 `/Applications` yet, point the command at wherever the `.app` bundle is:
 
 ```bash
-xattr -cr ~/Downloads/OpenJarvis.app
+xattr -cr ~/Downloads/Jarvis.app
 ```
 
 !!! note
@@ -70,8 +70,8 @@ The backend (Ollama, Python API server, inference) runs separately on your machi
 ### Build from source
 
 ```bash
-git clone https://github.com/open-jarvis/OpenJarvis.git
-cd OpenJarvis/desktop
+git clone https://github.com/adiisinghh/jarvis.git
+cd Jarvis/desktop
 npm install
 npm run tauri build
 ```
@@ -88,8 +88,8 @@ your machine and the frontend connects via `localhost`.
 ### One-command setup
 
 ```bash
-git clone https://github.com/open-jarvis/OpenJarvis.git
-cd OpenJarvis
+git clone https://github.com/adiisinghh/jarvis.git
+cd Jarvis
 ./scripts/quickstart.sh
 ```
 
@@ -108,8 +108,8 @@ If you prefer to run each step yourself:
 === "Step 1: Clone and install"
 
     ```bash
-    git clone https://github.com/open-jarvis/OpenJarvis.git
-    cd OpenJarvis
+    git clone https://github.com/adiisinghh/jarvis.git
+    cd Jarvis
     uv sync --extra desktop
     cd frontend && npm install && cd ..
     ```
@@ -149,14 +149,14 @@ Then open [http://localhost:5173](http://localhost:5173).
 
 ## CLI
 
-The command-line interface is the fastest way to interact with OpenJarvis
+The command-line interface is the fastest way to interact with Jarvis
 programmatically. Every feature is accessible from the terminal.
 
 ### Install
 
 ```bash
-git clone https://github.com/open-jarvis/OpenJarvis.git
-cd OpenJarvis
+git clone https://github.com/adiisinghh/jarvis.git
+cd Jarvis
 uv sync
 ```
 
@@ -203,15 +203,15 @@ For programmatic access, the `Jarvis` class provides a high-level sync API.
 ### Install
 
 ```bash
-git clone https://github.com/open-jarvis/OpenJarvis.git
-cd OpenJarvis
+git clone https://github.com/adiisinghh/jarvis.git
+cd Jarvis
 uv sync
 ```
 
 ### Quick example
 
 ```python
-from openjarvis import Jarvis
+from jarvis import Jarvis
 
 j = Jarvis()
 print(j.ask("Explain quicksort in two sentences."))
@@ -236,7 +236,7 @@ print(result["turns"])         # number of agent turns
 For full control, use the `SystemBuilder`:
 
 ```python
-from openjarvis import SystemBuilder
+from jarvis import SystemBuilder
 
 system = (
     SystemBuilder()

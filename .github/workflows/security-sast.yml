@@ -22,7 +22,7 @@ jobs:
       # Existing intentional shell execution is annotated at the call sites.
       # -lll -iii gates only HIGH severity and HIGH confidence findings.
       - name: Reject high/high findings
-        run: bandit -r src/openjarvis -lll -iii -f screen
+        run: bandit -r src/jarvis -lll -iii -f screen
 
   python-advisories:
     name: Python locked dependency advisories
@@ -128,7 +128,7 @@ jobs:
           fi
           semgrep scan --config=p/python --config=p/security-audit --error --strict \
             --metrics=off --disable-version-check --skip-unknown-extensions \
-            --json --output semgrep.json "${args[@]}" src/openjarvis scripts/security
+            --json --output semgrep.json "${args[@]}" src/jarvis scripts/security
       - name: Upload static security report
         if: always()
         uses: actions/upload-artifact@v7
