@@ -4,39 +4,25 @@
   <p><i>Personal AI, On Personal Devices.</i></p>
 
   <p>
-    <a href="https://arxiv.org/abs/2605.17172"><img src="https://img.shields.io/badge/arXiv-2605.17172-b31b1b.svg" alt="arXiv"></a>
-    <a href="https://github.com/adiisinghh/jarvis"><img src="https://img.shields.io/badge/project-Jarvis-blue" alt="Project"></a>
-    <a href="https://github.com/adiisinghh/jarvis"><img src="https://img.shields.io/badge/docs-mkdocs-blue" alt="Docs"></a>
+    <a href="https://github.com/adiisinghh/jarvis"><img src="https://img.shields.io/badge/repo-adiisinghh/jarvis-blue" alt="Repository"></a>
     <img src="https://img.shields.io/badge/python-%3E%3D3.11-blue" alt="Python">
     <img src="https://img.shields.io/badge/license-Apache%202.0-green" alt="License">
-    <a href="https://discord.gg/CMVBmDQ5Fj"><img src="https://img.shields.io/badge/discord-join-7289da?logo=discord&logoColor=white" alt="Discord"></a>
-    <a href="https://x.com/JarvisAI"><img src="https://img.shields.io/badge/X-@JarvisAI-black?logo=x&logoColor=white" alt="X / Twitter"></a>
   </p>
 </div>
 
 ---
 
-<div align="center">
-  <img alt="Jarvis demo reel" src="assets/jarvis_demo_reel.webp" width="75%">
-</div>
-
----
-
-> **[Documentation](https://github.com/adiisinghh/jarvis)**
->
-> **[Project Site](https://github.com/adiisinghh/jarvis)**
->
-> **[Paper](https://arxiv.org/abs/2605.17172)**
->
-> **[Leaderboard](https://github.com/adiisinghh/jarvis/blob/main/docs/leaderboard.md)**
+> **[Documentation](https://github.com/adiisinghh/jarvis/tree/main/docs)**
 >
 > **[Roadmap](https://github.com/adiisinghh/jarvis/blob/main/docs/development/roadmap.md)**
+>
+> **[Leaderboard](https://github.com/adiisinghh/jarvis/blob/main/docs/leaderboard.md)**
 
 ## Why Jarvis?
 
-Personal AI agents are exploding in popularity, but nearly all of them still route intelligence through cloud APIs. Your "personal" AI continues to depend on someone else's server. At the same time, our [Intelligence Per Watt](https://www.intelligence-per-watt.ai/) research showed that local language models already handle 88.7% of single-turn chat and reasoning queries, with intelligence efficiency improving 5.3× from 2023 to 2025. The models and hardware are increasingly ready. What has been missing is the software stack to make local-first personal AI practical.
+Personal AI agents usually route intelligence through cloud APIs, so the "personal" assistant still depends on someone else's server. Local models are now capable enough to handle most everyday chat and reasoning tasks — what has been missing is a software stack that makes local-first personal AI practical.
 
-Jarvis is that stack. It is a framework for local-first personal AI, built around three core ideas: shared primitives for building on-device agents; evaluations that treat energy, FLOPs, latency, and dollar cost as first-class constraints alongside accuracy; and a learning loop that improves models using local trace data. The goal is simple: make it possible to build personal AI agents that run locally by default, calling the cloud only when truly necessary. Jarvis aims to be both a research platform and a production foundation for local AI, in the spirit of PyTorch.
+Jarvis is that stack. It provides shared primitives for building on-device agents, evaluations that treat energy, FLOPs, latency, and cost as first-class constraints alongside accuracy, and a learning loop that improves models from local trace data. Run locally by default and call the cloud only when you actually need to.
 
 ## Installation
 
@@ -85,6 +71,42 @@ jarvis digest --fresh          # generate and play your first briefing
 
 Per-preset deep dives: [morning digest](https://github.com/adiisinghh/jarvis/blob/main/docs/user-guide/morning-digest.md) · [deep research](https://github.com/adiisinghh/jarvis/blob/main/docs/user-guide/deep-research.md) · [code assistant](https://github.com/adiisinghh/jarvis/blob/main/docs/user-guide/code-assistant.md) · [scheduled monitor](https://github.com/adiisinghh/jarvis/blob/main/docs/user-guide/scheduled-monitor.md) · [chat simple](https://github.com/adiisinghh/jarvis/blob/main/docs/user-guide/chat-simple.md) · or the full [quickstart guide](https://github.com/adiisinghh/jarvis/blob/main/docs/getting-started/quickstart.md).
 
+## Providers
+
+Jarvis separates **model identity** (`[intelligence]`) from **inference engines** (`[engine]`). An engine is a registered backend that runs or proxies a model; the cloud engine uses the `provider` hint to decide which vendor API to call.
+
+### Built-in engines
+
+| Engine key | Backend |
+|---|---|
+| `ollama` | Local Ollama daemon |
+| `vllm`, `sglang`, `llamacpp`, `mlx`, `lmstudio`, `exo`, `nexa`, `uzu`, `apple_fm`, `lemonade` | OpenAI-compatible local servers |
+| `gemma_cpp`, `afm` | On-device Gemma and Apple Foundation Models |
+| `litellm` | LiteLLM SDK / proxy |
+| `nim` | NVIDIA NIM |
+| `cloud` | Hosted provider APIs (see below) |
+| `multi` | Route across several engines |
+
+### Cloud providers
+
+Set `[intelligence] provider` to `local`, `openai`, `anthropic`, `google`, or `minimax`, and supply the matching API key:
+
+| Provider | Environment variable |
+|---|---|
+| OpenAI | `OPENAI_API_KEY` |
+| Anthropic | `ANTHROPIC_API_KEY` |
+| Google Gemini | `GEMINI_API_KEY` |
+| MiniMax | `MINIMAX_API_KEY` |
+| DeepSeek | `DEEPSEEK_API_KEY` |
+| OpenRouter | `OPENROUTER_API_KEY` |
+| AtlasCloud | `ATLASCLOUD_API_KEY` |
+
+Aggregator model IDs use `<aggregator>/<provider>/<model>` — for example `openrouter/anthropic/claude-sonnet-4.5`.
+
+Choose an engine and model with `jarvis ask -e <engine> -m <model>`, or set `[engine] default` / `[intelligence] preferred_engine` in `config.toml`.
+
+To add a provider, subclass `InferenceEngine` under `src/jarvis/engine/`, register it with `@EngineRegistry.register("key")`, export it from `src/jarvis/engine/__init__.py`, and add its config section in `src/jarvis/core/config.py`.
+
 ### Skills
 
 Skills teach agents how to better use tools and improve their reasoning. Every skill is a tool — agents discover them from a catalog and invoke them on demand.
@@ -104,7 +126,7 @@ jarvis optimize skills --policy dspy
 jarvis bench skills --max-samples 5 --seeds 42
 ```
 
-Import from [Hermes Agent](https://github.com/NousResearch/hermes-agent) (~150 skills), [OpenClaw](https://github.com/openclaw/skills) (~13,700 community skills), or any GitHub repo. Skills follow the [agentskills.io](https://agentskills.io/specification) open standard.
+Import from [Hermes Agent](https://github.com/NousResearch/hermes-agent), [OpenClaw](https://github.com/openclaw/skills), or any GitHub repo. Skills follow the [agentskills.io](https://agentskills.io/specification) open standard.
 
 See the [Skills User Guide](https://github.com/adiisinghh/jarvis/blob/main/docs/user-guide/skills.md) and [Skills Tutorial](https://github.com/adiisinghh/jarvis/blob/main/docs/tutorials/skills-workflow.md) for details.
 
@@ -125,59 +147,32 @@ Jarvis ships with eight built-in agents across three execution modes (on-demand,
 
 See the [User Guide](https://github.com/adiisinghh/jarvis/blob/main/docs/user-guide/morning-digest.md) and [Tutorials](https://github.com/adiisinghh/jarvis/blob/main/docs/tutorials/index.md) for detailed setup instructions.
 
-Full documentation — including Docker deployment, cloud engines, development setup, and tutorials — in the **[project repository](https://github.com/adiisinghh/jarvis)**.
+Full documentation — including Docker deployment, cloud engines, development setup, and tutorials — lives in the [docs directory](https://github.com/adiisinghh/jarvis/tree/main/docs).
 
 ## Community
 
 - **GitHub:** [github.com/adiisinghh/jarvis](https://github.com/adiisinghh/jarvis)
-- **Discord:** [discord.gg/CMVBmDQ5Fj](https://discord.gg/CMVBmDQ5Fj)
-- **X / Twitter:** [@JarvisAI](https://x.com/JarvisAI)
 - **Docs:** [project documentation](https://github.com/adiisinghh/jarvis/tree/main/docs)
 
 ## Contributing
 
-We welcome contributions! See the [Contributing Guide](CONTRIBUTING.md) for incentives, contribution types, and the PR process.
+Contributions are welcome. See the [Contributing Guide](CONTRIBUTING.md) for contribution types and the PR process.
 
 Quick start for contributors:
 
 ```bash
 git clone https://github.com/adiisinghh/jarvis.git
-cd Jarvis
+cd jarvis
 uv sync --extra dev
 uv run pre-commit install
 uv run pytest tests/ -v
 ```
 
-Browse the [Roadmap](https://github.com/adiisinghh/jarvis/blob/main/docs/development/roadmap.md) for areas where help is needed. Comment **"take"** on any issue to get auto-assigned.
+Browse the [Roadmap](https://github.com/adiisinghh/jarvis/blob/main/docs/development/roadmap.md) for areas where help is needed.
 
 ## About
 
-Jarvis is part of [Intelligence Per Watt](https://www.intelligence-per-watt.ai/), a research initiative studying the intelligence efficiency of AI systems. The project is developed at [Hazy Research](https://hazyresearch.stanford.edu/) and the [Scaling Intelligence Lab](https://scalingintelligence.stanford.edu/) at [Stanford SAIL](https://ai.stanford.edu/).
-
-## Sponsors
-
-<p>
-  <a href="https://www.laude.org/">Laude Institute</a> &bull;
-  <a href="https://datascience.stanford.edu/marlowe">Stanford Marlowe</a> &bull;
-  <a href="https://cloud.google.com/">Google Cloud Platform</a> &bull;
-  <a href="https://lambda.ai/">Lambda Labs</a> &bull;
-  <a href="https://ollama.com/">Ollama</a> &bull;
-  <a href="https://research.ibm.com/">IBM Research</a> &bull;
-  <a href="https://hai.stanford.edu/">Stanford HAI</a>
-</p>
-
-## Citation
-```bibtex
-@misc{saadfalcon2026jarvispersonalaipersonal,
-      title={Jarvis: Personal AI, On Personal Devices}, 
-      author={Jon Saad-Falcon and Avanika Narayan and Robby Manihani and Tanvir Bhathal and Herumb Shandilya and Hakki Orhun Akengin and Gabriel Bo and Andrew Park and Matthew Hart and Caia Costello and Chuan Li and Christopher Ré and Azalia Mirhoseini},
-      year={2026},
-      eprint={2605.17172},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG},
-      url={https://arxiv.org/abs/2605.17172}, 
-}
-```
+Jarvis is a local-first personal AI framework: a Python runtime for agents, tools, skills, evaluations, and learning, with a web GUI and desktop app on top. Models run on your own hardware by default, with cloud providers available when you opt in.
 
 ## License
 
