@@ -1,0 +1,34 @@
+{
+  "name": "jarvis-tui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.4.4",
+  "bin": {
+    "jarvis-tui": "./bin/jarvis-tui.mjs"
+  },
+  "scripts": {
+    "dev": "bun run src/index.tsx",
+    "build": "bun build src/index.tsx --target bun --compile --outfile dist/jarvis-tui",
+    "test": "bun test test/",
+    "typecheck": "bunx tsc --noEmit"
+  },
+  "dependencies": {
+    "@opentui/core": "0.9.9",
+    "@opentui/react": "0.9.9",
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@opentui/core-darwin-x64": "0.9.9",
+    "@opentui/core-darwin-arm64": "0.9.9",
+    "@opentui/core-linux-x64": "0.9.9",
+    "@opentui/core-linux-arm64": "0.9.9",
+    "@opentui/core-win32-x64": "0.9.9",
+    "@opentui/core-win32-arm64": "0.9.9",
+    "@opentui/core-linux-x64-musl": "0.9.9",
+    "@opentui/core-linux-arm64-musl": "0.9.9",
+    "@types/bun": "latest",
+    "@types/react": "^19.0.0",
+    "typescript": "^5.7.0"
+  }
+}

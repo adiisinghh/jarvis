@@ -131,6 +131,7 @@ if not _DATA_BOUNDARY_BOOTSTRAP:
     from jarvis.cli.skill_cmd import skill
     from jarvis.cli.telemetry_cmd import telemetry
     from jarvis.cli.tool_cmd import tool
+    from jarvis.cli.tui_cmd import tui
     from jarvis.cli.vault_cmd import vault
     from jarvis.cli.workflow_cmd import workflow
 
@@ -167,6 +168,7 @@ if not _DATA_BOUNDARY_BOOTSTRAP:
     cli.add_command(gateway, "gateway")
     cli.add_command(gui, "gui")
     cli.add_command(tool, "tool")
+    cli.add_command(tui, "tui")
     cli.add_command(registry, "registry")
     cli.add_command(config, "config")
     cli.add_command(connect, "connect")

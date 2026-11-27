@@ -1,4 +1,4 @@
-.PHONY: setup build test lint format
+.PHONY: setup build test lint format build-tui test-tui
 
 # Mirrors .github/workflows/ci.yml so `make test` matches CI locally.
 
@@ -17,3 +17,9 @@ lint:
 
 format:
 	uv run ruff format src/ tests/
+
+build-tui:
+	cd tui && bun install && bun run build
+
+test-tui:
+	cd tui && bun test && bun run typecheck

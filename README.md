@@ -43,6 +43,7 @@ Platform-specific notes (WSL2 setup, native-Windows scheduled-task service, desk
 ```bash
 jarvis                          # start chatting (default: chat-simple)
 jarvis gui                      # start the graphical browser interface
+jarvis tui                      # start the terminal UI (requires `make build-tui`)
 jarvis init --preset <name> --force  # replace config with a starter preset
 ```
 
