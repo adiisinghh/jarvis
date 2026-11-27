@@ -30,7 +30,7 @@ dependencies = [
     # Security floors for dependencies already used by the core integrations.
     "aiohttp>=3.14.4",
     "click>=8",
-    "croniter>=2.0",
+    "croniter>=7.0.0",
     "datasets>=5.0.1",
     "ddgs>=9.11.4",
     "httpx>=0.27",
@@ -174,7 +174,7 @@ mining-pearl-vllm = ["docker>=7.0", "httpx>=0.27"]
 pdf = ["pdfplumber>=0.10"]
 # Kept as a compatibility extra for existing install commands. Cron support is
 # a core scheduler contract now, so croniter is also installed unconditionally.
-scheduler = ["croniter>=2.0"]
+scheduler = ["croniter>=7.0.0"]
 security-signing = ["cryptography>=43"]
 sandbox-wasm = ["wasmtime>=25"]
 sandbox-docker = ["docker>=7.0"]
