@@ -698,10 +698,13 @@ def _model_id(model: Any, request: Request) -> str:
     """Normalize OpenCode's `{providerID, id}` model ref to a Jarvis model id."""
     if isinstance(model, dict):
         candidate = model.get("id") or model.get("model") or ""
-        if isinstance(candidate, str) and candidate and candidate != "default":
+        if isinstance(candidate, str) and candidate and candidate not in {"default", "jarvis/default"}:
             return candidate
-    if isinstance(model, str) and model and model != "default":
+    if isinstance(model, str) and model and model not in {"default", "jarvis/default"}:
         return model
+    server_model = getattr(request.app.state, "model", "")
+    if isinstance(server_model, str) and server_model:
+        return server_model
     names = _model_names(request)
     return names[0] if names else ""
 
@@ -790,11 +793,11 @@ async def opencode_session_prompt(session_id: str, request: Request) -> Dict[str
         try:
             reply = await asyncio.wait_for(
                 asyncio.to_thread(_generate_reply, request, text, model, history),
-                timeout=10.0,
+                timeout=120.0,
             )
         except asyncio.TimeoutError:
             logger.warning("OpenCode shim engine call timed out")
-            reply = "Jarvis is online, but the inference engine did not respond in time. Start Ollama or configure a cloud provider, then try again."
+            reply = "Jarvis is online, but the inference engine did not respond in time. Check that Ollama is running and the model is available, then try again."
         except Exception as exc:
             logger.debug("OpenCode shim engine call failed: %s", exc)
             reply = "Jarvis is online, but the inference engine could not be reached. Start Ollama or configure a cloud provider."
