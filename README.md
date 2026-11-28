@@ -14,6 +14,8 @@
 
 > **[Documentation](https://github.com/adiisinghh/jarvis/tree/main/docs)**
 >
+> **[Terminal UI](https://github.com/adiisinghh/jarvis/blob/main/docs/user-guide/tui.md)**
+>
 > **[Roadmap](https://github.com/adiisinghh/jarvis/blob/main/docs/development/roadmap.md)**
 >
 > **[Leaderboard](https://github.com/adiisinghh/jarvis/blob/main/docs/leaderboard.md)**
@@ -51,6 +53,17 @@ jarvis init --preset <name> --force  # replace config with a starter preset
 chat interface in your default browser. It requires Node.js 22+ and is
 available from a source checkout; packaged desktop installers are available
 from the [latest release](https://github.com/adiisinghh/jarvis/releases/latest).
+
+### Terminal UI
+
+`jarvis tui` launches the OpenCode-inspired terminal interface. Build it once
+from a source checkout with `make build-tui` (requires [Bun](https://bun.sh)
+1.4.4), then run it. It uses the same local server and API key as `jarvis gui`,
+so switching between the two keeps your configuration. Press **Ctrl+P** to
+toggle the side panel — sessions, model/agent pickers, approvals, tool calls,
+diffs, a shell pane, files, worktrees, MCP, and plugins. See the
+[Terminal UI guide](https://github.com/adiisinghh/jarvis/blob/main/docs/user-guide/tui.md)
+for keys, flags, and troubleshooting.
 
 > Prefix `jarvis ...` with `uv run`, or `source .venv/bin/activate` first.
 

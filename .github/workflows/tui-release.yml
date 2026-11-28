@@ -1,0 +1,82 @@
+name: tui-release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (e.g. tui-v0.1.0). Defaults to the pushed tag."
+        required: false
+        type: string
+  push:
+    tags:
+      - "tui-v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    # Bun cross-compiles from any host: for each --target it downloads the
+    # matching Bun runtime and resolves the prebuilt platform packages listed
+    # in tui/package.json devDependencies (all 8 OpenTUI variants are installed
+    # on every runner). No macos-latest runner is required for the darwin
+    # targets -- cross-compiling them from ubuntu-latest is supported and
+    # keeps this matrix to a single runner image.
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: linux-x64
+            artifact: jarvis-tui-linux-x64
+          - target: linux-arm64
+            artifact: jarvis-tui-linux-arm64
+          - target: darwin-x64
+            artifact: jarvis-tui-darwin-x64
+          - target: darwin-arm64
+            artifact: jarvis-tui-darwin-arm64
+          - target: windows-x64
+            artifact: jarvis-tui-windows-x64.exe
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.4"
+
+      - name: Install dependencies
+        working-directory: tui
+        run: bun install
+
+      - name: Build ${{ matrix.target }}
+        working-directory: tui
+        run: bun run build:${{ matrix.target }}
+
+      - name: Upload ${{ matrix.artifact }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: tui/dist/${{ matrix.artifact }}
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: jarvis-tui-*
+          merge-multiple: true
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          generate_release_notes: true
+          files: |
+            jarvis-tui-linux-x64
+            jarvis-tui-linux-arm64
+            jarvis-tui-darwin-x64
+            jarvis-tui-darwin-arm64
+            jarvis-tui-windows-x64.exe

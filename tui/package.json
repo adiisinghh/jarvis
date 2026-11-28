@@ -10,6 +10,12 @@
   "scripts": {
     "dev": "bun run src/index.tsx",
     "build": "bun build src/index.tsx --target bun --compile --outfile dist/jarvis-tui",
+    "build:linux-x64": "bun build src/index.tsx --target=bun-linux-x64 --compile --outfile dist/jarvis-tui-linux-x64",
+    "build:linux-arm64": "bun build src/index.tsx --target=bun-linux-arm64 --compile --outfile dist/jarvis-tui-linux-arm64",
+    "build:darwin-x64": "bun build src/index.tsx --target=bun-darwin-x64 --compile --outfile dist/jarvis-tui-darwin-x64",
+    "build:darwin-arm64": "bun build src/index.tsx --target=bun-darwin-arm64 --compile --outfile dist/jarvis-tui-darwin-arm64",
+    "build:windows-x64": "bun build src/index.tsx --target=bun-windows-x64 --compile --outfile dist/jarvis-tui-windows-x64.exe",
+    "build:all": "bun run build:linux-x64 && bun run build:linux-arm64 && bun run build:darwin-x64 && bun run build:darwin-arm64 && bun run build:windows-x64",
     "test": "bun test test/",
     "typecheck": "bunx tsc --noEmit"
   },

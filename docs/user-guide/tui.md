@@ -13,6 +13,19 @@ without losing your configuration.
 make build-tui          # installs TUI dependencies and compiles tui/dist/jarvis-tui
 ```
 
+### Release binaries
+
+For distributable, self-contained builds compile one binary per target:
+
+```bash
+make release-tui
+```
+
+Artifacts land in `tui/dist/`, named per target (for example
+`jarvis-tui-linux-x64`, `jarvis-tui-darwin-arm64`, and
+`jarvis-tui-windows-x64.exe`). Copy the binary for your platform somewhere on
+your `PATH` and run it directly, or keep using `jarvis tui` from the checkout.
+
 ## Run
 
 ```bash
@@ -49,6 +62,30 @@ variables internally. `0.0.0.0` in the server config is translated to
 - Single-letter shortcuts are Ctrl-prefixed so they never steal typed text.
 - The tab strip at the top switches sessions. The status line shows the model,
   session, tokens, latency, energy, and current status.
+
+## Reconnect and telemetry
+
+The TUI subscribes to agent events over a WebSocket. If the connection drops —
+for example during a brief server restart — it reconnects automatically with
+backoff, so you do not need to relaunch the client.
+
+Telemetry is **disabled by default**. It is only enabled when both
+`JARVIS_TUI_TELEMETRY=1` and `JARVIS_TUI_TELEMETRY_URL` are set; otherwise the
+TUI collects and sends no telemetry.
+
+## Troubleshooting
+
+- **Server not running / connection refused** — the TUI talks to the same local
+  server as `jarvis gui`. Start it with `jarvis serve` or `jarvis gui`, or pass
+  `--url` pointing at a running server. `jarvis doctor` reports server status.
+- **Wrong API key (401 / 403)** — pass the server's key with `--api-key` or set
+  `JARVIS_API_KEY`; the same key used by `jarvis gui` works here.
+- **Bun is missing** — `make build-tui` requires [Bun](https://bun.sh) 1.4.4.
+  Install it first, or run the prebuilt binary from `tui/dist/` instead of
+  rebuilding.
+- **Large binary** — the compiled `tui/dist/jarvis-tui` bundles the Bun runtime
+  and OpenTUI native libraries, so it is roughly 130 MB. That is expected; use
+  the packaged release artifact if download size matters.
 
 ## Development
 

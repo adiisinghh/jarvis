@@ -4,6 +4,7 @@ import type { JarvisClient } from "./client";
 import { mapEvent } from "./events";
 import { parseToolEvent } from "./tool-events";
 import { extractDiff } from "./diff";
+import { maybeReport, snapshot } from "./telemetry";
 import type { ShellLine } from "./shell";
 import { initialState, reduce } from "./store";
 import { commandForKey } from "./keymap";
@@ -38,6 +39,7 @@ export function App({ client, model }: { client: JarvisClient; model: string }) 
   const [plugins, setPlugins] = useState<{ id: string; kind?: string }[]>([]);
   const [tools, setTools] = useState<{ name: string; description?: string; source?: string }[]>([]);
   const [shellHistory, setShellHistory] = useState<ShellLine[]>([]);
+  const [connection, setConnection] = useState("connecting");
 
   function reloadSessions() {
     void client.listSessions()
@@ -71,27 +73,37 @@ export function App({ client, model }: { client: JarvisClient; model: string }) 
   }, [client]);
 
   useEffect(() => {
-    return client.subscribe((event) => {
-      const data = event.data ?? {};
-      if (data.tokens !== undefined || data.latency_ms !== undefined || data.energy_j !== undefined) {
-        dispatch({
-          type: "metrics",
-          value: {
-            tokens: typeof data.tokens === "number" ? data.tokens : undefined,
-            latencyMs: typeof data.latency_ms === "number" ? data.latency_ms : undefined,
-            energyJ: typeof data.energy_j === "number" ? data.energy_j : undefined,
-          },
-        });
-      }
-      const toolCall = parseToolEvent(event);
-      if (toolCall) dispatch({ type: "toolcall", value: toolCall });
-      const mapped = mapEvent(event);
-      if (!mapped) return;
-      dispatch({ type: "event", text: mapped.text });
-      if (mapped.kind === "status" || mapped.kind === "error") {
-        dispatch({ type: "status", text: mapped.text });
-      }
-    });
+    const dispose = client.subscribeWithReconnect(
+      (event) => {
+        const data = event.data ?? {};
+        if (data.tokens !== undefined || data.latency_ms !== undefined || data.energy_j !== undefined) {
+          dispatch({
+            type: "metrics",
+            value: {
+              tokens: typeof data.tokens === "number" ? data.tokens : undefined,
+              latencyMs: typeof data.latency_ms === "number" ? data.latency_ms : undefined,
+              energyJ: typeof data.energy_j === "number" ? data.energy_j : undefined,
+            },
+          });
+        }
+        const toolCall = parseToolEvent(event);
+        if (toolCall) dispatch({ type: "toolcall", value: toolCall });
+        const mapped = mapEvent(event);
+        if (!mapped) return;
+        dispatch({ type: "event", text: mapped.text });
+        if (mapped.kind === "status" || mapped.kind === "error") {
+          dispatch({ type: "status", text: mapped.text });
+        }
+      },
+      (status) => {
+        setConnection(status);
+        dispatch({ type: "event", text: `Connection: ${status}` });
+      },
+    );
+    return () => {
+      dispose();
+      maybeReport(snapshot());
+    };
   }, [client]);
 
   useKeyboard((key) => {
@@ -186,6 +198,7 @@ export function App({ client, model }: { client: JarvisClient; model: string }) 
           model={state.model}
           session={state.sessionId}
           metrics={state.metrics}
+          connection={connection}
         />
       </box>
       {panelVisible && (
