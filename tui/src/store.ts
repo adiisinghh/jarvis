@@ -1,10 +1,15 @@
+import type { Session } from "./client";
+
 export type Message = { role: "user" | "assistant"; content: string };
+export type Metrics = { tokens?: number; latencyMs?: number; energyJ?: number };
 export type TuiState = {
   messages: Message[];
   status: string;
   model: string;
   sessionId: string;
+  sessions: Session[];
   events: string[];
+  metrics: Metrics;
 };
 
 export type Action =
@@ -13,6 +18,9 @@ export type Action =
   | { type: "status"; text: string }
   | { type: "model"; text: string }
   | { type: "session"; text: string }
+  | { type: "sessions"; value: Session[] }
+  | { type: "active-session"; text: string }
+  | { type: "metrics"; value: Metrics }
   | { type: "event"; text: string }
   | { type: "clear" };
 
@@ -21,7 +29,9 @@ export const initialState: TuiState = {
   status: "Ready",
   model: "",
   sessionId: "",
+  sessions: [],
   events: [],
+  metrics: {},
 };
 
 export function reduce(state: TuiState, action: Action): TuiState {
@@ -48,6 +58,12 @@ export function reduce(state: TuiState, action: Action): TuiState {
       return { ...state, model: action.text };
     case "session":
       return { ...state, sessionId: action.text, messages: [], events: [] };
+    case "sessions":
+      return { ...state, sessions: action.value };
+    case "active-session":
+      return { ...state, sessionId: action.text, messages: [], events: [] };
+    case "metrics":
+      return { ...state, metrics: action.value };
     case "event":
       return { ...state, events: [...state.events.slice(-19), action.text] };
     case "clear":
