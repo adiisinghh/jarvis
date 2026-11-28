@@ -3,6 +3,8 @@ import { useKeyboard } from "@opentui/react";
 import type { JarvisClient } from "./client";
 import { mapEvent } from "./events";
 import { parseToolEvent } from "./tool-events";
+import { extractDiff } from "./diff";
+import type { ShellLine } from "./shell";
 import { initialState, reduce } from "./store";
 import { commandForKey } from "./keymap";
 import { Frame } from "./components/Frame";
@@ -16,6 +18,12 @@ import { ModelPicker } from "./components/ModelPicker";
 import { AgentPicker } from "./components/AgentPicker";
 import { ApprovalPanel } from "./components/ApprovalPanel";
 import { ToolCallPane } from "./components/ToolCallPane";
+import { DiffView } from "./components/DiffView";
+import { ShellPane } from "./components/ShellPane";
+import { FilePicker } from "./components/FilePicker";
+import { WorktreePicker } from "./components/WorktreePicker";
+import { McpPanel } from "./components/McpPanel";
+import { PluginPanel } from "./components/PluginPanel";
 import { HelpOverlay } from "./components/HelpOverlay";
 
 export function App({ client, model }: { client: JarvisClient; model: string }) {
@@ -23,6 +31,13 @@ export function App({ client, model }: { client: JarvisClient; model: string }) 
   const [helpVisible, setHelpVisible] = useState(false);
   const [panelVisible, setPanelVisible] = useState(false);
   const [models, setModels] = useState<{ id: string }[]>([]);
+  const [files, setFiles] = useState<string[]>([]);
+  const [filePath, setFilePath] = useState(".");
+  const [worktrees, setWorktrees] = useState<string[]>([]);
+  const [currentWorktree, setCurrentWorktree] = useState("");
+  const [plugins, setPlugins] = useState<{ id: string; kind?: string }[]>([]);
+  const [tools, setTools] = useState<{ name: string; description?: string; source?: string }[]>([]);
+  const [shellHistory, setShellHistory] = useState<ShellLine[]>([]);
 
   function reloadSessions() {
     void client.listSessions()
@@ -38,13 +53,21 @@ export function App({ client, model }: { client: JarvisClient; model: string }) 
     }
   }
 
+  function refreshPaths() {
+    void client.listFiles(filePath).then(setFiles).catch(() => setFiles([]));
+    void client.listWorktrees().then(setWorktrees).catch(() => setWorktrees([]));
+  }
+
   useEffect(() => {
     reloadSessions();
     void client.listModels().then(setModels).catch(() => undefined);
     void client.listAgents()
       .then((agents) => dispatch({ type: "agents", value: agents }))
       .catch(() => undefined);
+    void client.listPlugins().then(setPlugins).catch(() => undefined);
+    void client.listTools().then(setTools).catch(() => undefined);
     void refreshApprovals();
+    refreshPaths();
   }, [client]);
 
   useEffect(() => {
@@ -112,7 +135,29 @@ export function App({ client, model }: { client: JarvisClient; model: string }) 
     }
   }
 
+  async function runShell(command: string) {
+    setShellHistory((lines) => [...lines, { kind: "command", text: command }]);
+    try {
+      let output = "";
+      for await (const token of client.chat(state.model, [{
+        role: "user",
+        content: `Run this shell command and return only its output:\n${command}`,
+      }])) {
+        output += token;
+      }
+      setShellHistory((lines) => [
+        ...lines,
+        { kind: "output", text: output.trim() || "(no output)" },
+      ]);
+    } catch (error) {
+      setShellHistory((lines) => [...lines, { kind: "error", text: String(error) }]);
+    }
+  }
+
   const busy = state.status !== "Ready";
+  const diffText = state.toolCalls
+    .map((call) => String((call.params as { diff?: unknown } | undefined)?.diff ?? call.outcome ?? ""))
+    .find((text) => extractDiff(text)) ?? "";
 
   return (
     <box style={{ flexDirection: "row", height: "100%", backgroundColor: "#0d0d0d" }}>
@@ -144,7 +189,7 @@ export function App({ client, model }: { client: JarvisClient; model: string }) 
         />
       </box>
       {panelVisible && (
-        <box style={{ flexDirection: "column", width: 38, backgroundColor: "#141414" }}>
+        <scrollbox style={{ width: 40, backgroundColor: "#141414" }} focused>
           <Frame title="Sessions" style={{ height: 8 }}>
             <SessionManager
               sessions={state.sessions}
@@ -177,7 +222,39 @@ export function App({ client, model }: { client: JarvisClient; model: string }) 
           <Frame title="Tool calls" style={{ height: 8 }}>
             <ToolCallPane calls={state.toolCalls} />
           </Frame>
-        </box>
+          <Frame title="Diff" style={{ height: 10 }}>
+            <DiffView diff={diffText} />
+          </Frame>
+          <Frame title="Shell" style={{ height: 8 }}>
+            <ShellPane history={shellHistory} onRun={(command) => void runShell(command)} />
+          </Frame>
+          <Frame title="Files" style={{ height: 8 }}>
+            <FilePicker
+              files={files}
+              onSelect={(path) => dispatch({ type: "event", text: `Reference: ${path}` })}
+              onRefresh={(path) => {
+                setFilePath(path);
+                void client.listFiles(path).then(setFiles).catch(() => setFiles([]));
+              }}
+            />
+          </Frame>
+          <Frame title="Worktrees" style={{ height: 6 }}>
+            <WorktreePicker
+              worktrees={worktrees}
+              current={currentWorktree}
+              onSelect={(path) => {
+                setCurrentWorktree(path);
+                dispatch({ type: "event", text: `Worktree: ${path}` });
+              }}
+            />
+          </Frame>
+          <Frame title="MCP" style={{ height: 6 }}>
+            <McpPanel tools={tools} />
+          </Frame>
+          <Frame title="Plugins" style={{ height: 6 }}>
+            <PluginPanel plugins={plugins} />
+          </Frame>
+        </scrollbox>
       )}
       <HelpOverlay visible={helpVisible} />
     </box>

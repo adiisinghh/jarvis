@@ -41,8 +41,11 @@ variables internally. `0.0.0.0` in the server config is translated to
 - Type `/` for command completion (`/help`, `/model`, `/clear`, …) or `@` for
   file/path completion.
 - **?** toggles the keyboard help overlay; **Escape** closes it.
-- **Ctrl+P** toggles the side panel with session management, model and agent
-  pickers, pending approvals, and tool-call details. **Ctrl+Q** quits.
+- **Ctrl+P** toggles the scrollable side panel with session management, model
+  and agent pickers, pending approvals, tool-call details, unified diffs, a
+  shell pane, file/worktree pickers, and MCP/plugin listings. **Ctrl+Q** quits.
+- The shell pane runs commands through the selected agent; tool approvals still
+  flow through the approval panel when the server requires them.
 - Single-letter shortcuts are Ctrl-prefixed so they never steal typed text.
 - The tab strip at the top switches sessions. The status line shows the model,
   session, tokens, latency, energy, and current status.

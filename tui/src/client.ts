@@ -81,6 +81,36 @@ export class JarvisClient {
     return body.actions ?? [];
   }
 
+  async listFiles(path = "."): Promise<string[]> {
+    const url = new URL(`${this.cfg.baseUrl}/v1/files`);
+    url.searchParams.set("path", path);
+    const res = await fetch(url, { headers: this.headers() });
+    if (!res.ok) return [];
+    const body = (await res.json()) as { files?: string[] };
+    return body.files ?? [];
+  }
+
+  async listWorktrees(): Promise<string[]> {
+    const res = await fetch(`${this.cfg.baseUrl}/v1/worktrees`, { headers: this.headers() });
+    if (!res.ok) return [];
+    const body = (await res.json()) as { worktrees?: string[] };
+    return body.worktrees ?? [];
+  }
+
+  async listPlugins(): Promise<{ id: string; kind?: string }[]> {
+    const res = await fetch(`${this.cfg.baseUrl}/v1/plugins`, { headers: this.headers() });
+    if (!res.ok) return [];
+    const body = (await res.json()) as { plugins?: { id: string; kind?: string }[] };
+    return body.plugins ?? [];
+  }
+
+  async listTools(): Promise<{ name: string; category?: string; source?: string }[]> {
+    const res = await fetch(`${this.cfg.baseUrl}/v1/tools`, { headers: this.headers() });
+    if (!res.ok) return [];
+    const body = (await res.json()) as { tools?: { name: string; category?: string; source?: string }[] };
+    return body.tools ?? [];
+  }
+
   async *chat(model: string, messages: ChatMessage[]): AsyncGenerator<string> {
     const res = await fetch(`${this.cfg.baseUrl}/v1/chat/completions`, {
       method: "POST",

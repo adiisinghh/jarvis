@@ -6,6 +6,8 @@ import asyncio
 import inspect
 import json
 import logging
+import os
+import subprocess
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -1541,6 +1543,229 @@ async def start_optimize_run(req: OptimizeRunRequest, request: Request):
     return {"status": "started", "run_id": "placeholder"}
 
 
+# ---- Phase 4 discovery routes (files / worktrees / plugins) ----
+#
+# These are read-only helpers for the terminal UI. They deliberately never
+# raise: an unreadable directory, a broken git binary or a misconfigured
+# loader degrades to an empty list with a ``status`` field instead of a 500.
+# No resolved filesystem path is ever echoed back on a rejected request.
+
+_MAX_FILE_LISTING = 1000
+_MAX_WORKTREES = 100
+_MAX_GIT_OUTPUT_BYTES = 64 * 1024
+
+
+def _workspace_roots(request: Request) -> List[Path]:
+    """Allowed roots for the read-only discovery endpoints.
+
+    Precedence:
+      1. ``JARVIS_WORKSPACE`` (os.pathsep-separated, as used by memory indexing)
+      2. ``[security] allowed_dirs`` via the shared ``resolve_allowed_dirs``
+         helper used by the file tools
+      3. the server process' working directory
+
+    An empty allow-list means "unrestricted" to the file tools, which must
+    never be the case for an HTTP endpoint. That is why a missing policy
+    falls back to the process CWD, and why a broken config falls back to it
+    instead of widening access.
+    """
+    roots: List[Path] = []
+    for entry in os.environ.get("JARVIS_WORKSPACE", "").split(os.pathsep):
+        entry = entry.strip()
+        if not entry:
+            continue
+        try:
+            roots.append(Path(entry).expanduser().resolve())
+        except (OSError, RuntimeError):
+            continue
+
+    if not roots:
+        try:
+            from jarvis.tools._paths import resolve_allowed_dirs
+
+            roots.extend(
+                Path(entry).expanduser().resolve()
+                for entry in resolve_allowed_dirs(None)
+            )
+        except Exception as exc:
+            logger.warning("Could not resolve configured allowed_dirs: %s", exc)
+
+    if not roots:
+        try:
+            roots.append(Path.cwd().resolve())
+        except (OSError, RuntimeError):
+            pass
+    return roots
+
+
+def _within_roots(path: Path, roots: List[Path]) -> bool:
+    """Containment check shared by the discovery endpoints."""
+    return any(path == root or path.is_relative_to(root) for root in roots)
+
+
+files_router = APIRouter(prefix="/v1/files", tags=["files"])
+
+
+@files_router.get("")
+async def list_files(request: Request, path: str = "."):
+    """List entry names inside *path*, resolved inside an allowed workspace.
+
+    Relative paths (including the default ``.``) are resolved against the
+    first allowed root, never the ambient process CWD. Absolute paths are
+    accepted only when they stay inside an allowed root. Traversal attempts,
+    missing directories and policy failures all return an empty list.
+    """
+    try:
+        roots = _workspace_roots(request)
+        if not roots:
+            return {"files": [], "path": path, "status": "empty"}
+
+        requested = Path(path).expanduser()
+        target = (
+            requested.resolve()
+            if requested.is_absolute()
+            else (roots[0] / requested).resolve()
+        )
+        if not _within_roots(target, roots):
+            logger.debug("Rejected file listing outside allowed workspace: %s", path)
+            return {
+                "files": [],
+                "path": path,
+                "status": "empty",
+                "error": "Path is outside the allowed workspace directories.",
+            }
+        if not target.is_dir():
+            return {"files": [], "path": path, "status": "empty"}
+
+        from jarvis.security.file_policy import is_sensitive_file
+
+        names: List[str] = []
+        for child in sorted(target.iterdir(), key=lambda p: p.name)[:_MAX_FILE_LISTING]:
+            # A listing must not advertise secrets, and a symlink must not
+            # advertise a name that resolves outside the sandbox.
+            if is_sensitive_file(child.name):
+                continue
+            try:
+                resolved = child.resolve()
+            except (OSError, RuntimeError):
+                continue
+            if not _within_roots(resolved, roots):
+                continue
+            names.append(child.name)
+        return {"files": names, "path": path}
+    except Exception as exc:
+        logger.warning("File listing failed for %s: %s", path, exc)
+        return {
+            "files": [],
+            "path": path,
+            "status": "empty",
+            "error": "File listing unavailable.",
+        }
+
+
+worktrees_router = APIRouter(prefix="/v1/worktrees", tags=["worktrees"])
+
+
+@worktrees_router.get("")
+async def list_worktrees(request: Request):
+    """List git worktrees via a bounded, read-only ``git worktree list``.
+
+    The command runs with a cwd restricted to an allowed workspace root.
+    Missing git, a failed command, oversized output or worktrees outside the
+    allowed roots all degrade to an empty list.
+    """
+    try:
+        roots = _workspace_roots(request)
+        for cwd in [root for root in roots if root.is_dir()][:3]:
+            try:
+                proc = subprocess.run(
+                    ["git", "worktree", "list", "--porcelain"],
+                    cwd=str(cwd),
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                    check=False,
+                )
+            except (OSError, subprocess.SubprocessError) as exc:
+                logger.debug("git worktree listing unavailable in %s: %s", cwd, exc)
+                continue
+            if proc.returncode != 0 or len(proc.stdout) > _MAX_GIT_OUTPUT_BYTES:
+                continue
+
+            worktrees: List[str] = []
+            for line in proc.stdout.splitlines():
+                if not line.startswith("worktree "):
+                    continue
+                raw = line[len("worktree ") :].strip()
+                if not raw:
+                    continue
+                try:
+                    candidate = Path(raw)
+                    if not _within_roots(candidate.resolve(), roots):
+                        continue
+                except (OSError, RuntimeError):
+                    continue
+                if raw not in worktrees:
+                    worktrees.append(raw)
+                if len(worktrees) >= _MAX_WORKTREES:
+                    break
+            return {"worktrees": worktrees} if worktrees else {
+                "worktrees": [],
+                "status": "empty",
+            }
+        return {"worktrees": [], "status": "empty"}
+    except Exception as exc:
+        logger.warning("Worktree listing failed: %s", exc)
+        return {"worktrees": [], "status": "empty"}
+
+
+plugins_router = APIRouter(prefix="/v1/plugins", tags=["plugins"])
+
+
+@plugins_router.get("")
+async def list_plugins(request: Request):
+    """List configured recipes and skills as ``{id, kind}`` plugins.
+
+    Both sources are discovered through their existing loaders. A missing or
+    broken loader is skipped; if neither yields anything the response carries
+    ``status: "empty"`` so the UI can distinguish "no plugins" from a failure.
+    """
+    plugins: List[Dict[str, str]] = []
+    seen = set()
+
+    def _add(plugin_id: str, kind: str) -> None:
+        plugin_id = str(plugin_id).strip()
+        if not plugin_id or (plugin_id, kind) in seen:
+            return
+        seen.add((plugin_id, kind))
+        plugins.append({"id": plugin_id, "kind": kind})
+
+    try:
+        from jarvis.recipes.loader import discover_recipes
+
+        for recipe in discover_recipes():
+            _add(
+                getattr(recipe, "name", "") or "",
+                getattr(recipe, "kind", "recipe") or "recipe",
+            )
+    except Exception as exc:
+        logger.warning("Recipe discovery failed for plugin listing: %s", exc)
+
+    try:
+        from jarvis.core.paths import get_config_dir
+        from jarvis.skills.loader import discover_skills
+
+        config = getattr(request.app.state, "config", None)
+        skills = getattr(config, "skills", None)
+        skills_dir = getattr(skills, "skills_dir", None) or get_config_dir() / "skills"
+        for manifest in discover_skills(skills_dir):
+            _add(getattr(manifest, "name", "") or "", "skill")
+    except Exception as exc:
+        logger.warning("Skill discovery failed for plugin listing: %s", exc)
+
+    return {"plugins": plugins} if plugins else {"plugins": [], "status": "empty"}
+
+
 def include_all_routes(app) -> None:
     """Include all extended API routers in a FastAPI app."""
     from jarvis.server.approval_routes import (
@@ -1561,6 +1786,9 @@ def include_all_routes(app) -> None:
     app.include_router(speech_router)
     app.include_router(feedback_router)
     app.include_router(optimize_router)
+    app.include_router(files_router)
+    app.include_router(worktrees_router)
+    app.include_router(plugins_router)
 
     # Agent Manager routes (if available)
     try:
@@ -1614,4 +1842,7 @@ __all__ = [
     "speech_router",
     "feedback_router",
     "optimize_router",
+    "files_router",
+    "worktrees_router",
+    "plugins_router",
 ]
