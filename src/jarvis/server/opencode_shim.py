@@ -132,6 +132,19 @@ def _touch(record: _SessionRecord) -> None:
     record.updated = time.time()
 
 
+def _publish_session_event(request: Request, session_id: str) -> None:
+    """Tell connected TUI clients about a new session."""
+    bus = getattr(request.app.state, "bus", None)
+    if bus is None:
+        return
+    try:
+        from jarvis.core.events import EventType
+
+        bus.publish(EventType.SESSION_START, {"session_id": session_id})
+    except Exception as exc:
+        logger.debug("OpenCode session event publish failed: %s", exc)
+
+
 # ---------------------------------------------------------------------------
 # Jarvis config / registry → OpenCode payload helpers
 # ---------------------------------------------------------------------------
@@ -557,6 +570,7 @@ async def opencode_session_create(request: Request) -> Dict[str, Any]:
     requested_agent = body.get("agent")
     if isinstance(requested_agent, str) and requested_agent:
         record.agent = requested_agent
+    _publish_session_event(request, record.id)
     return {"data": _session_info(record)}
 
 
@@ -758,7 +772,11 @@ async def opencode_session_prompt(session_id: str, request: Request) -> Dict[str
         body = {}
     text = str(body.get("text") or "")
     delivery = str(body.get("delivery") or "steer")
+    with _SESSION_LOCK:
+        existed = session_id in _SESSIONS
     record = _get_session(session_id, create=True)
+    if not existed and record is not None:
+        _publish_session_event(request, record.id)
     assert record is not None
 
     message = _user_message(session_id, text, delivery=delivery)
@@ -988,6 +1006,15 @@ async def opencode_event(request: Request) -> StreamingResponse:
         yield 'data: {"type":"server.connected","properties":{}}\n\n'
         # Current OpenCode clients look for id/created/data on the handshake.
         yield _frame("server.connected", {})
+        # The client builds its session list from `session.created` events, not
+        # from GET /api/session. Replay the sessions the shim already knows.
+        with _SESSION_LOCK:
+            known = [_session_info(record) for record in list(_SESSIONS.values())]
+        for session in known:
+            yield _frame(
+                "session.created",
+                {"sessionID": session["id"], "session": session},
+            )
         try:
             while True:
                 try:
