@@ -27,6 +27,25 @@ def _api_keys_match(presented: str, expected: str) -> bool:
     return secrets.compare_digest(presented_bytes, expected_bytes)
 
 
+def _basic_password(auth: str) -> str | None:
+    """Return the password from an HTTP Basic header, if well formed.
+
+    The vendored OpenCode client sends ``Authorization: Basic base64(user:key)``
+    with username ``opencode``. The username is intentionally not restricted:
+    the key alone is the credential.
+    """
+    scheme, _, token = auth.partition(" ")
+    if scheme.lower() != "basic" or not token:
+        return None
+    try:
+        decoded = base64.b64decode(token, validate=True).decode("utf-8")
+    except (ValueError, UnicodeDecodeError):
+        return None
+    if ":" not in decoded:
+        return None
+    return decoded.split(":", 1)[1]
+
+
 class AuthMiddleware(BaseHTTPMiddleware):
     """Validates ``Authorization: Bearer <key>`` on ``/v1/*`` and ``/api/*`` routes.
 
@@ -54,8 +73,15 @@ class AuthMiddleware(BaseHTTPMiddleware):
                     status_code=401,
                 )
             scheme, _, token = auth.partition(" ")
+            basic_password = _basic_password(auth)
             # Constant-time comparison to avoid leaking the key via timing.
-            if scheme.lower() != "bearer" or not _api_keys_match(token, self._api_key):
+            bearer_valid = scheme.lower() == "bearer" and _api_keys_match(
+                token, self._api_key
+            )
+            basic_valid = basic_password is not None and _api_keys_match(
+                basic_password, self._api_key
+            )
+            if not (bearer_valid or basic_valid):
                 return JSONResponse(
                     {"detail": "Invalid API key"},
                     status_code=401,

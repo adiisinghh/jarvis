@@ -484,6 +484,15 @@ def create_app(
     app.include_router(analytics_router)
     include_all_routes(app)
 
+    # OpenCode v2.4.2 TUI compatibility shim. Registered after all other
+    # routers so its /api/{rest:path} catch-all cannot shadow real routes.
+    try:
+        from jarvis.server.opencode_shim import router as opencode_shim_router
+
+        app.include_router(opencode_shim_router)
+    except Exception as exc:
+        logger.debug("OpenCode shim routes not registered: %s", exc)
+
     # Restore SendBlue channel bindings from database on startup
     _restore_sendblue_bindings(app)
 

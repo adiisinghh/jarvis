@@ -45,7 +45,7 @@ Platform-specific notes (WSL2 setup, native-Windows scheduled-task service, desk
 ```bash
 jarvis                          # start chatting (default: chat-simple)
 jarvis gui                      # start the graphical browser interface
-jarvis tui                      # start the terminal UI (requires `make build-tui`)
+jarvis tui                      # start the terminal UI (setup below)
 jarvis init --preset <name> --force  # replace config with a starter preset
 ```
 
@@ -56,14 +56,24 @@ from the [latest release](https://github.com/adiisinghh/jarvis/releases/latest).
 
 ### Terminal UI
 
-`jarvis tui` launches the OpenCode-inspired terminal interface. Build it once
-from a source checkout with `make build-tui` (requires [Bun](https://bun.sh)
-1.4.4), then run it. It uses the same local server and API key as `jarvis gui`,
-so switching between the two keeps your configuration. Press **Ctrl+P** to
-toggle the side panel — sessions, model/agent pickers, approvals, tool calls,
-diffs, a shell pane, files, worktrees, MCP, and plugins. See the
+`jarvis tui` launches the vendored OpenCode v2.4.2 TUI: OpenCode's own prompt,
+transcript, dialogs, and status line, backed by Jarvis's OpenCode-compatible API
+shim, with Jarvis branding where visible. It connects to the running Jarvis
+server and uses the same server URL and API key as `jarvis gui`, so switching
+between the two keeps your configuration.
+
+Prerequisites: [Bun](https://bun.sh) 1.4.4 and a running Jarvis server. From a
+source checkout, install the TUI dependencies once:
+
+```bash
+cd tui/opencode && bun install
+```
+
+Then launch it with `jarvis tui` (optional flags: `--url`, `--api-key`,
+`--model`). `JARVIS_API_KEY` is mapped to OpenCode's `OPENCODE_PASSWORD`; a
+keyless loopback server needs no key. See the
 [Terminal UI guide](https://github.com/adiisinghh/jarvis/blob/main/docs/user-guide/tui.md)
-for keys, flags, and troubleshooting.
+for key bindings, source mode, and troubleshooting.
 
 > Prefix `jarvis ...` with `uv run`, or `source .venv/bin/activate` first.
 

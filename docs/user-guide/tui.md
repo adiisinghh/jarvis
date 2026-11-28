@@ -1,32 +1,29 @@
 # Terminal UI
 
-Jarvis includes an OpenCode-inspired terminal interface. It talks to the same
-local server and API key as `jarvis gui`, so you can switch between the two
-without losing your configuration.
+`jarvis tui` launches the vendored **OpenCode v2.4.2** terminal interface:
+OpenCode's own prompt, transcript, dialogs, diff viewer, and status line, with
+Jarvis branding where visible. It connects to the running Jarvis server through
+an OpenCode-compatible `/api/*` shim, using the same server and API key as
+`jarvis gui`, so switching between the two keeps your configuration.
 
-## Prerequisites
+!!! note
+    The earlier hand-written React TUI under `tui/src` is legacy. `jarvis tui`
+    now launches the vendored OpenCode TUI from `tui/opencode/`.
 
-- [Bun](https://bun.sh) 1.4.4 (only needed to build the TUI)
-- A built TUI binary in the source checkout
+## Setup
+
+Prerequisites:
+
+- A running Jarvis server — start one with `jarvis serve` or `jarvis gui`.
+- [Bun](https://bun.sh) 1.4.4 for a source checkout.
+
+Install the vendored workspace dependencies **once** from a source checkout:
 
 ```bash
-make build-tui          # installs TUI dependencies and compiles tui/dist/jarvis-tui
+cd tui/opencode && bun install
 ```
 
-### Release binaries
-
-For distributable, self-contained builds compile one binary per target:
-
-```bash
-make release-tui
-```
-
-Artifacts land in `tui/dist/`, named per target (for example
-`jarvis-tui-linux-x64`, `jarvis-tui-darwin-arm64`, and
-`jarvis-tui-windows-x64.exe`). Copy the binary for your platform somewhere on
-your `PATH` and run it directly, or keep using `jarvis tui` from the checkout.
-
-## Run
+## Launch
 
 ```bash
 jarvis tui
@@ -34,68 +31,104 @@ jarvis tui --model qwen3:8b
 jarvis tui --url http://127.0.0.1:8000 --api-key "$JARVIS_API_KEY"
 ```
 
-Flags:
-
 | Flag | Default | Description |
 |---|---|---|
-| `--url` | `http://<server.host>:<server.port>` | Jarvis server base URL |
+| `--url` | derived from Jarvis server config (`http://<host>:<port>`) | Base URL of the running Jarvis server that exposes the `/api/*` shim |
 | `--api-key` | `JARVIS_API_KEY` env / config | API key for a key-protected server |
-| `--model` | empty | Model ID to chat with |
+| `--model` | empty | Default model for the session |
 
-The TUI uses `JARVIS_URL`, `JARVIS_API_KEY`, and `JARVIS_MODEL` environment
-variables internally. `0.0.0.0` in the server config is translated to
-`127.0.0.1` for the client.
+A server host of `0.0.0.0` in the config is translated to `127.0.0.1` for the
+client.
 
-## Keys and layout
+## Authentication
 
-- Type a message and press **Enter** to send. **Shift/Enter** style multiline
-  editing is available through the textarea.
-- **↑ / ↓** walk prompt history; **Tab** accepts an autocomplete suggestion.
-- Type `/` for command completion (`/help`, `/model`, `/clear`, …) or `@` for
-  file/path completion.
-- **?** toggles the keyboard help overlay; **Escape** closes it.
-- **Ctrl+P** toggles the scrollable side panel with session management, model
-  and agent pickers, pending approvals, tool-call details, unified diffs, a
-  shell pane, file/worktree pickers, and MCP/plugin listings. **Ctrl+Q** quits.
-- The shell pane runs commands through the selected agent; tool approvals still
-  flow through the approval panel when the server requires them.
-- Single-letter shortcuts are Ctrl-prefixed so they never steal typed text.
-- The tab strip at the top switches sessions. The status line shows the model,
-  session, tokens, latency, energy, and current status.
+Jarvis protects its API with `JARVIS_API_KEY` (Bearer), while the OpenCode TUI
+expects a password (`OPENCODE_PASSWORD`, Basic auth). `jarvis tui` maps
+`JARVIS_API_KEY` / `--api-key` to `OPENCODE_PASSWORD` automatically. A keyless
+loopback server needs no key — leave both unset. Use the same key that
+`jarvis gui` uses.
 
-## Reconnect and telemetry
+## Key bindings
 
-The TUI subscribes to agent events over a WebSocket. If the connection drops —
-for example during a brief server restart — it reconnects automatically with
-backoff, so you do not need to relaunch the client.
+These are OpenCode's own defaults. The **leader key is `Ctrl+X`**: press it,
+then press the second key (for example `Ctrl+X` then `N` for a new session).
 
-Telemetry is **disabled by default**. It is only enabled when both
-`JARVIS_TUI_TELEMETRY=1` and `JARVIS_TUI_TELEMETRY_URL` are set; otherwise the
-TUI collects and sends no telemetry.
+Everyday keys:
+
+| Action | Keys |
+|---|---|
+| Submit prompt | `Enter` |
+| Insert a newline instead of submitting | `Shift+Enter`, `Ctrl+Enter`, `Alt+Enter`, or `Ctrl+J` |
+| Interrupt the current session | `Escape` |
+| Clear the input | `Ctrl+C` |
+| Previous / next prompt in history | `Up` / `Down` |
+| Accept an autocomplete suggestion | `Tab` (dismiss with `Escape`) |
+| Command palette | `Ctrl+P` |
+| Open recent sessions and projects | `Ctrl+O` |
+| Next / previous session tab | `Ctrl+Tab` / `Ctrl+Shift+Tab` |
+| Next agent | `Shift+Tab` |
+| Cycle recent models | `F2` / `Shift+F2` |
+| Page through the transcript | `PageUp` / `PageDown` |
+| First / last message | `Ctrl+G` / `Ctrl+Alt+G` |
+| Exit the TUI | `Ctrl+C` or `Ctrl+D` |
+
+Leader combinations:
+
+| Action | Keys |
+|---|---|
+| New session | `Ctrl+X` `N` |
+| List sessions | `Ctrl+X` `L` |
+| Toggle the sidebar | `Ctrl+X` `B` |
+| Toggle the terminal pane | `Ctrl+X` `T` |
+| List models | `Ctrl+X` `M` |
+| List agents | `Ctrl+X` `A` |
+| View status | `Ctrl+X` `S` |
+| Open the external editor | `Ctrl+X` `E` |
+| Compact the session | `Ctrl+X` `C` |
+| Undo / redo a message | `Ctrl+X` `U` / `Ctrl+X` `R` |
+| Copy a message | `Ctrl+X` `Y` |
+| Export a session | `Ctrl+X` `X` |
+
+The full shortcut sheet is available through the which-key panel
+(`Ctrl+Alt+K`). Open the built-in help dialog with the command palette
+(`Ctrl+P`, then choose **Help**) or with the `/help` command. In the diff
+viewer, `]` / `[` jump between hunks and `?` lists the diff-specific keys.
+
+## Running from source
+
+For development you can launch the vendored CLI directly instead of using
+`jarvis tui`:
+
+```bash
+cd tui/opencode
+export OPENCODE_PASSWORD="$JARVIS_API_KEY"   # omit for a keyless server
+bun run --cwd packages/cli src/index.ts --server http://127.0.0.1:8000
+```
+
+Replace the `--server` URL with your Jarvis server address if it differs.
 
 ## Troubleshooting
 
-- **Server not running / connection refused** — the TUI talks to the same local
+- **Server not running / connection refused** — the TUI talks to the same
   server as `jarvis gui`. Start it with `jarvis serve` or `jarvis gui`, or pass
   `--url` pointing at a running server. `jarvis doctor` reports server status.
 - **Wrong API key (401 / 403)** — pass the server's key with `--api-key` or set
-  `JARVIS_API_KEY`; the same key used by `jarvis gui` works here.
-- **Bun is missing** — `make build-tui` requires [Bun](https://bun.sh) 1.4.4.
-  Install it first, or run the prebuilt binary from `tui/dist/` instead of
-  rebuilding.
-- **Large binary** — the compiled `tui/dist/jarvis-tui` bundles the Bun runtime
-  and OpenTUI native libraries, so it is roughly 130 MB. That is expected; use
-  the packaged release artifact if download size matters.
+  `JARVIS_API_KEY`; it is mapped to `OPENCODE_PASSWORD` for the TUI. The key
+  must match the one used by `jarvis gui`. For a keyless loopback server, leave
+  both unset.
+- **Bun is missing / dependencies are not installed** — install Bun 1.4.4 and
+  run `cd tui/opencode && bun install` once. `jarvis tui` cannot start the
+  vendored CLI without `bun` on `PATH`.
+- **Broken UI after pulling changes** — re-run `cd tui/opencode && bun install`
+  to refresh the vendored workspace dependencies.
+- **Forgot a shortcut** — open the which-key panel with `Ctrl+Alt+K`, or use
+  `Ctrl+P` and choose **Help**.
 
-## Development
+## Licensing
 
-```bash
-cd tui
-bun install
-bun test
-bun run typecheck
-bun run dev           # run from source instead of the compiled binary
-```
-
-The TUI source lives in `tui/`. It is a standalone Bun/TypeScript package using
-OpenTUI and React 19; see `THIRD_PARTY_NOTICES.md` for attribution.
+The TUI source is vendored from [OpenCode](https://github.com/anomalyco/opencode)
+v2.4.2 (MIT License) in `tui/opencode/`. Its license, attribution, and the
+licenses of its dependencies are documented in
+[`THIRD_PARTY_NOTICES.md`](https://github.com/adiisinghh/jarvis/blob/main/THIRD_PARTY_NOTICES.md).
+OpenCode branding is replaced with Jarvis branding where visible; the vendored
+code remains under its upstream license.

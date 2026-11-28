@@ -1,9 +1,10 @@
 # Third-party notices
 
-## OpenCode
+## OpenCode (vendored TUI)
 
-The Jarvis TUI is a reimplementation of interaction patterns from OpenCode
-v2.4.2 (commit `fc31a485317970bcf6be7b431a9830aaef875731`), available at
+The OpenCode TUI and its supporting Bun workspace are vendored under
+`tui/opencode/`. They come from OpenCode v2.4.2, commit
+`fc31a485317970bcf6be7b431a9830aaef875731`, available at
 <https://github.com/anomalyco/opencode>. OpenCode is licensed under the MIT
 License:
 
@@ -27,8 +28,17 @@ License:
 > OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 > SOFTWARE.
 
-No OpenCode source code is vendored in this repository. OpenCode logos and
-brand assets are not used.
+The vendored tree includes the upstream `packages/`, `services/`, `patches/`
+and `script/` directories plus the root `package.json`, `bunfig.toml`,
+`tsconfig.json`, `bun.lock` and `LICENSE`. OpenCode source code and MIT license
+notices are preserved. Jarvis branding changes:
+
+- The root workspace package is renamed to `jarvis-opencode-tui`, version
+  `2.4.2-jarvis`; workspaces, catalog and `packageManager: bun@1.4.4` are
+  unchanged.
+- The OpenCode ASCII wordmark in `packages/tui/src/logo.ts` was replaced with a
+  Jarvis placeholder wordmark. No OpenCode logos or brand assets are displayed
+  in the vendored TUI.
 
 ## OpenTUI
 

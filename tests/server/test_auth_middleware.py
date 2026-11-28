@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import base64
+
 import pytest
 
 pytest.importorskip("fastapi", reason="jarvis[server] not installed")
@@ -60,6 +62,22 @@ class TestAuthMiddleware:
             headers={"Authorization": "Bearer oj_sk_test123"},
         )
         assert resp.status_code == 200
+
+    def test_accepts_basic_auth_for_vendored_opencode_client(self, client):
+        token = base64.b64encode(b"opencode:oj_sk_test123").decode("ascii")
+        resp = client.get(
+            "/v1/models",
+            headers={"Authorization": f"Basic {token}"},
+        )
+        assert resp.status_code == 200
+
+    def test_rejects_wrong_basic_password(self, client):
+        token = base64.b64encode(b"opencode:wrong").decode("ascii")
+        resp = client.get(
+            "/v1/models",
+            headers={"Authorization": f"Basic {token}"},
+        )
+        assert resp.status_code == 401
 
     def test_health_exempt(self, client):
         resp = client.get("/health")
