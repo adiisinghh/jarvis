@@ -35,11 +35,14 @@ variables internally. `0.0.0.0` in the server config is translated to
 
 ## Keys and layout
 
-- Type a message and press **Enter** to send.
-- **q** quits the interface.
-- The top frame shows the conversation, the middle frame shows recent
-  tool/event lines, and the bottom frame is the prompt.
-- The status line shows the current model, session, and status.
+- Type a message and press **Enter** to send. **Shift/Enter** style multiline
+  editing is available through the textarea.
+- **↑ / ↓** walk prompt history; **Tab** accepts an autocomplete suggestion.
+- Type `/` for command completion (`/help`, `/model`, `/clear`, …) or `@` for
+  file/path completion.
+- **?** toggles the keyboard help overlay; **Escape** closes it; **q** quits.
+- The tab strip at the top switches sessions. The status line shows the model,
+  session, tokens, latency, energy, and current status.
 
 ## Development
 
