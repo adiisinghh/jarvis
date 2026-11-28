@@ -125,6 +125,31 @@ def test_prompt_never_500_and_exposes_messages():
     assert any(m.get("text") == "hello from the shim" for m in messages.json()["data"])
 
 
+class _FakeEngine:
+    def health(self) -> bool:
+        return True
+
+    def generate(self, messages, *, model="", **kwargs):
+        return {"content": "Hi from Jarvis"}
+
+
+def test_prompt_produces_assistant_reply():
+    app = create_app(engine=_FakeEngine(), model="test-model", config=JarvisConfig())
+    client = TestClient(app)
+    session_id = client.post("/api/session", json={}).json()["data"]["id"]
+    response = client.post(
+        f"/api/session/{session_id}/prompt",
+        json={"text": "hello"},
+    )
+    assert response.status_code == 200
+    messages = client.get(f"/api/session/{session_id}/message").json()["data"]
+    assert any(
+        message.get("type") == "assistant"
+        and "Hi from Jarvis" in str(message.get("content"))
+        for message in messages
+    )
+
+
 def test_inventory_endpoints_are_shape_safe():
     client = TestClient(_make_app())
     for path in (

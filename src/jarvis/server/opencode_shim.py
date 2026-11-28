@@ -680,16 +680,39 @@ def _assistant_message(session_id: str, text: str, model: str) -> Dict[str, Any]
     }
 
 
-def _generate_reply(request: Request, text: str, model: str, history: List[Dict[str, Any]]) -> str:
+def _model_id(model: Any, request: Request) -> str:
+    """Normalize OpenCode's `{providerID, id}` model ref to a Jarvis model id."""
+    if isinstance(model, dict):
+        candidate = model.get("id") or model.get("model") or ""
+        if isinstance(candidate, str) and candidate and candidate != "default":
+            return candidate
+    if isinstance(model, str) and model and model != "default":
+        return model
+    names = _model_names(request)
+    return names[0] if names else ""
+
+
+def _generate_reply(request: Request, text: str, model: Any, history: List[Dict[str, Any]]) -> str:
     """Best-effort call into the Jarvis engine; never raises."""
     engine = getattr(request.app.state, "engine", None)
     if engine is None or not text:
         return ""
     try:
-        messages: List[Dict[str, str]] = []
+        health = engine.health()
+        if asyncio.iscoroutine(health):
+            health.close()
+            health = False
+        if not bool(health):
+            return "Jarvis is online, but no inference engine is available. Start Ollama or configure a cloud provider, then try again."
+    except Exception:
+        return "Jarvis is online, but the inference engine could not be reached. Start Ollama or configure a cloud provider."
+    try:
+        from jarvis.core.types import Message, Role
+
+        messages: List[Message] = []
         for message in history:
             if message.get("type") == "user":
-                messages.append({"role": "user", "content": str(message.get("text", ""))})
+                messages.append(Message(role=Role.USER, content=str(message.get("text", ""))))
             elif message.get("type") == "assistant":
                 content = message.get("content", [])
                 reply = "".join(
@@ -697,9 +720,9 @@ def _generate_reply(request: Request, text: str, model: str, history: List[Dict[
                     for part in content
                     if isinstance(part, dict) and part.get("type") == "text"
                 )
-                messages.append({"role": "assistant", "content": reply})
-        messages.append({"role": "user", "content": text})
-        result = engine.generate(messages, model=model)
+                messages.append(Message(role=Role.ASSISTANT, content=reply))
+        messages.append(Message(role=Role.USER, content=text))
+        result = engine.generate(messages, model=_model_id(model, request))
         if asyncio.iscoroutine(result):
             # Engine.generate is synchronous by contract; a coroutine here is
             # an unexpected implementation. Close it rather than leaking.
@@ -707,6 +730,9 @@ def _generate_reply(request: Request, text: str, model: str, history: List[Dict[
             return ""
         if isinstance(result, dict):
             return str(result.get("content", "") or "")
+        content = getattr(result, "content", None)
+        if content is not None:
+            return str(content)
         return str(result or "")
     except Exception as exc:
         logger.warning("OpenCode shim prompt fell back to empty reply: %s", exc)
@@ -744,10 +770,16 @@ async def opencode_session_prompt(session_id: str, request: Request) -> Dict[str
 
     if text:
         try:
-            reply = await asyncio.to_thread(_generate_reply, request, text, model, history)
+            reply = await asyncio.wait_for(
+                asyncio.to_thread(_generate_reply, request, text, model, history),
+                timeout=10.0,
+            )
+        except asyncio.TimeoutError:
+            logger.warning("OpenCode shim engine call timed out")
+            reply = "Jarvis is online, but the inference engine did not respond in time. Start Ollama or configure a cloud provider, then try again."
         except Exception as exc:
             logger.debug("OpenCode shim engine call failed: %s", exc)
-            reply = ""
+            reply = "Jarvis is online, but the inference engine could not be reached. Start Ollama or configure a cloud provider."
         if reply:
             assistant = _assistant_message(session_id, reply, model)
             with _SESSION_LOCK:
