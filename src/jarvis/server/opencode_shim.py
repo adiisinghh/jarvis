@@ -512,8 +512,9 @@ async def opencode_location(request: Request) -> Dict[str, Any]:
 
 
 @router.post("/api/location/reload")
-async def opencode_location_reload(request: Request) -> Dict[str, Any]:
-    return {"directory": _directory()}
+async def opencode_location_reload(request: Request) -> Response:
+    """OpenCode expects 204 No Content for a reload."""
+    return Response(status_code=204)
 
 
 @router.get("/api/fs/list")
@@ -538,6 +539,22 @@ async def opencode_fs_list(request: Request, location: str | None = None) -> Dic
 @router.get("/api/fs/find")
 async def opencode_fs_find(request: Request, query: str = "") -> Dict[str, Any]:
     return {"location": {"directory": _directory()}, "data": []}
+
+
+@router.post("/api/session/{session_id}/view")
+async def opencode_session_view(session_id: str, request: Request) -> Response:
+    """OpenCode expects 204 when a session view is registered."""
+    return Response(status_code=204)
+
+
+@router.post("/api/session/{session_id}/agent")
+async def opencode_session_agent(session_id: str, request: Request) -> Response:
+    return Response(status_code=204)
+
+
+@router.post("/api/session/{session_id}/model")
+async def opencode_session_model(session_id: str, request: Request) -> Response:
+    return Response(status_code=204)
 
 
 # ---------------------------------------------------------------------------
@@ -663,6 +680,7 @@ def _user_message(session_id: str, text: str, *, delivery: str = "steer") -> Dic
         "id": f"msg_{uuid.uuid4().hex}",
         "sessionID": session_id,
         "time": {"created": created},
+        "role": "user",
         "type": "user",
         "text": text,
         "files": [],
@@ -674,18 +692,34 @@ def _user_message(session_id: str, text: str, *, delivery: str = "steer") -> Dic
     }
 
 
-def _assistant_message(session_id: str, text: str, model: str) -> Dict[str, Any]:
+def _assistant_message(session_id: str, text: str, model: str, parent_id: str = "") -> Dict[str, Any]:
     created = _ms(time.time())
+    message_id = f"msg_{uuid.uuid4().hex}"
     return {
-        "id": f"msg_{uuid.uuid4().hex}",
+        "id": message_id,
         "sessionID": session_id,
         "time": {"created": created, "completed": created},
+        "role": "assistant",
         "type": "assistant",
         "agent": "jarvis",
+        "parentID": parent_id,
+        "modelID": model or _DEFAULT_MODEL,
+        "providerID": "jarvis",
+        "mode": "build",
+        "path": {"cwd": _directory(), "root": _directory()},
         "model": {"providerID": "jarvis", "id": model or _DEFAULT_MODEL},
-        "content": [{"type": "text", "text": text}],
+        "content": [
+            {
+                "id": f"prt_{uuid.uuid4().hex}",
+                "sessionID": session_id,
+                "messageID": message_id,
+                "type": "text",
+                "text": text,
+            }
+        ],
         "cost": 0.0,
         "tokens": {
+            "total": 0,
             "input": 0,
             "output": 0,
             "reasoning": 0,
@@ -802,7 +836,7 @@ async def opencode_session_prompt(session_id: str, request: Request) -> Dict[str
             logger.debug("OpenCode shim engine call failed: %s", exc)
             reply = "Jarvis is online, but the inference engine could not be reached. Start Ollama or configure a cloud provider."
         if reply:
-            assistant = _assistant_message(session_id, reply, model)
+            assistant = _assistant_message(session_id, reply, model, parent_id=message["id"])
             with _SESSION_LOCK:
                 record.messages.append(assistant)
                 _touch(record)
@@ -818,6 +852,7 @@ async def opencode_session_prompt(session_id: str, request: Request) -> Dict[str
                             "session_id": session_id,
                             "response": reply,
                             "model": model,
+                            "assistant_message": assistant,
                         },
                     )
                 except Exception as exc:
@@ -907,6 +942,11 @@ def _session_id_from(data: Dict[str, Any]) -> str:
         value = data.get(key)
         if isinstance(value, str) and value:
             return value
+    # Engine/inference events do not carry a session id. Attribute them to the
+    # shim session that was most recently touched instead of a synthetic one.
+    with _SESSION_LOCK:
+        if _SESSIONS:
+            return max(_SESSIONS.values(), key=lambda record: record.updated).id
     return "ses_jarvis"
 
 
@@ -931,21 +971,39 @@ def _translate(event: Any) -> List[Tuple[str, Dict[str, Any]]]:
     }
     if event_type in ("session_start", "session_end", "agent_turn_start", "agent_turn_end"):
         properties["session"] = session
+        properties["info"] = session
     if legacy_type in ("message.updated", "message.part.updated"):
-        properties["message"] = {
-            "id": f"msg_{uuid.uuid4().hex}",
-            "sessionID": session_id,
-            "time": {"created": properties["timestamp"]},
-            "type": "assistant",
-            "agent": "jarvis",
-            "model": {"providerID": "jarvis", "id": _DEFAULT_MODEL},
-            "content": [{"type": "text", "text": str(data.get("response", "") or "")}],
-        }
-        if legacy_type == "message.part.updated":
-            properties["part"] = {
-                "type": "text",
-                "text": str(data.get("response", "") or data.get("content", "") or ""),
+        assistant = data.get("assistant_message")
+        if not isinstance(assistant, dict):
+            assistant = {
+                "id": f"msg_{uuid.uuid4().hex}",
+                "sessionID": session_id,
+                "role": "assistant",
+                "time": {"created": properties["timestamp"]},
+                "content": [
+                    {
+                        "id": f"prt_{uuid.uuid4().hex}",
+                        "sessionID": session_id,
+                        "type": "text",
+                        "text": str(data.get("response", "") or ""),
+                    }
+                ],
             }
+        properties["info"] = assistant
+        properties["message"] = assistant
+        properties["messageID"] = assistant.get("id", "")
+        if legacy_type == "message.part.updated":
+            parts = assistant.get("content") or []
+            if parts and isinstance(parts[0], dict):
+                properties["part"] = parts[0]
+            else:
+                properties["part"] = {
+                    "id": f"prt_{uuid.uuid4().hex}",
+                    "sessionID": session_id,
+                    "messageID": assistant.get("id", ""),
+                    "type": "text",
+                    "text": str(data.get("response", "") or ""),
+                }
 
     frames: List[Tuple[str, Dict[str, Any]]] = [(legacy_type, properties)]
     if current_type:
@@ -1016,7 +1074,7 @@ async def opencode_event(request: Request) -> StreamingResponse:
         for session in known:
             yield _frame(
                 "session.created",
-                {"sessionID": session["id"], "session": session},
+                {"sessionID": session["id"], "session": session, "info": session},
             )
         try:
             while True:
@@ -1098,6 +1156,16 @@ async def opencode_catch_all(rest: str, request: Request) -> Any:
     is touched here, so this handler cannot fail.
     """
     tail = rest.rstrip("/").rsplit("/", 1)[-1]
+    # OpenCode's generated client rejects a 200 where it expects 204 No Content.
+    # These are the action-style endpoints the TUI calls during session setup.
+    no_content = {
+        "view", "agent", "model", "move", "command", "shell", "revert",
+        "background", "environment", "refresh", "init", "activate",
+        "cancel", "connect", "disconnect", "watch", "unwatch", "reply",
+        "shutdown", "complete",
+    }
+    if request.method in {"POST", "PUT", "PATCH", "DELETE"} and tail in no_content:
+        return Response(status_code=204)
     if tail in _LIST_HINTS or rest in ("permission/request", "permission/saved"):
         return []
     return {}
