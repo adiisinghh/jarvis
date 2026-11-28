@@ -2,6 +2,15 @@ export type JarvisConfig = { baseUrl: string; apiKey?: string };
 export type ChatMessage = { role: string; content: string };
 export type JarvisEvent = { type: string; timestamp?: string; data?: Record<string, unknown> };
 export type Session = { id: string; title?: string; updated_at?: string };
+export type AgentInfo = { id: string; name?: string; description?: string };
+export type ApprovalInfo = {
+  id: string;
+  tool?: string;
+  params?: Record<string, unknown>;
+  risk?: string;
+  expires_at?: string;
+};
+export type ToolCallInfo = { id: string; tool: string; params?: Record<string, unknown>; outcome?: string };
 
 function base64url(value: string): string {
   return Buffer.from(value).toString("base64url");
@@ -27,8 +36,49 @@ export class JarvisClient {
   async listSessions(): Promise<Session[]> {
     const res = await fetch(`${this.cfg.baseUrl}/v1/sessions`, { headers: this.headers() });
     if (!res.ok) throw new Error(`sessions request failed: ${res.status}`);
-    const body = (await res.json()) as { data?: Session[] } | Session[];
-    return Array.isArray(body) ? body : body.data ?? [];
+    const body = (await res.json()) as { data?: Session[]; sessions?: Session[] } | Session[];
+    if (Array.isArray(body)) return body;
+    return body.data ?? body.sessions ?? [];
+  }
+
+  async createSession(): Promise<Session> {
+    const res = await fetch(`${this.cfg.baseUrl}/v1/sessions`, {
+      method: "POST",
+      headers: this.headers(),
+    });
+    if (!res.ok) throw new Error(`create session failed: ${res.status}`);
+    return (await res.json()) as Session;
+  }
+
+  async renameSession(id: string, title: string): Promise<void> {
+    const res = await fetch(`${this.cfg.baseUrl}/v1/sessions/${id}`, {
+      method: "PATCH",
+      headers: this.headers(),
+      body: JSON.stringify({ title }),
+    });
+    if (!res.ok) throw new Error(`rename session failed: ${res.status}`);
+  }
+
+  async deleteSession(id: string): Promise<void> {
+    const res = await fetch(`${this.cfg.baseUrl}/v1/sessions/${id}`, {
+      method: "DELETE",
+      headers: this.headers(),
+    });
+    if (!res.ok) throw new Error(`delete session failed: ${res.status}`);
+  }
+
+  async listAgents(): Promise<AgentInfo[]> {
+    const res = await fetch(`${this.cfg.baseUrl}/v1/agents`, { headers: this.headers() });
+    if (!res.ok) return [];
+    const body = (await res.json()) as { data?: AgentInfo[]; agents?: AgentInfo[] };
+    return body.data ?? body.agents ?? [];
+  }
+
+  async listPendingApprovals(): Promise<ApprovalInfo[]> {
+    const res = await fetch(`${this.cfg.baseUrl}/v1/approvals/pending`, { headers: this.headers() });
+    if (!res.ok) return [];
+    const body = (await res.json()) as { actions?: ApprovalInfo[] };
+    return body.actions ?? [];
   }
 
   async *chat(model: string, messages: ChatMessage[]): AsyncGenerator<string> {

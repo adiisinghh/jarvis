@@ -20,7 +20,7 @@ export function StatusBar({ status, model, session, metrics }: {
       <text fg={theme.muted} content={latency} />
       <text fg={theme.muted} content={energy} />
       <text fg={statusColor(status)} content={status} />
-      <text fg={theme.muted} content="?: help  q: quit" />
+      <text fg={theme.muted} content="?: help  ctrl+p: panel  ctrl+q: quit" />
     </box>
   );
 }

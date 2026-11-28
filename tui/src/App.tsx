@@ -2,6 +2,7 @@ import { useEffect, useReducer, useState } from "react";
 import { useKeyboard } from "@opentui/react";
 import type { JarvisClient } from "./client";
 import { mapEvent } from "./events";
+import { parseToolEvent } from "./tool-events";
 import { initialState, reduce } from "./store";
 import { commandForKey } from "./keymap";
 import { Frame } from "./components/Frame";
@@ -10,16 +11,40 @@ import { Prompt } from "./components/Prompt";
 import { StatusBar } from "./components/StatusBar";
 import { Spinner } from "./components/Spinner";
 import { SessionTabs } from "./components/SessionTabs";
+import { SessionManager } from "./components/SessionManager";
+import { ModelPicker } from "./components/ModelPicker";
+import { AgentPicker } from "./components/AgentPicker";
+import { ApprovalPanel } from "./components/ApprovalPanel";
+import { ToolCallPane } from "./components/ToolCallPane";
 import { HelpOverlay } from "./components/HelpOverlay";
 
 export function App({ client, model }: { client: JarvisClient; model: string }) {
   const [state, dispatch] = useReducer(reduce, { ...initialState, model });
   const [helpVisible, setHelpVisible] = useState(false);
+  const [panelVisible, setPanelVisible] = useState(false);
+  const [models, setModels] = useState<{ id: string }[]>([]);
 
-  useEffect(() => {
+  function reloadSessions() {
     void client.listSessions()
       .then((sessions) => dispatch({ type: "sessions", value: sessions }))
       .catch(() => undefined);
+  }
+
+  async function refreshApprovals() {
+    try {
+      dispatch({ type: "approvals", value: await client.listPendingApprovals() });
+    } catch {
+      // A keyless or offline server simply has no approvals to show.
+    }
+  }
+
+  useEffect(() => {
+    reloadSessions();
+    void client.listModels().then(setModels).catch(() => undefined);
+    void client.listAgents()
+      .then((agents) => dispatch({ type: "agents", value: agents }))
+      .catch(() => undefined);
+    void refreshApprovals();
   }, [client]);
 
   useEffect(() => {
@@ -35,6 +60,8 @@ export function App({ client, model }: { client: JarvisClient; model: string }) 
           },
         });
       }
+      const toolCall = parseToolEvent(event);
+      if (toolCall) dispatch({ type: "toolcall", value: toolCall });
       const mapped = mapEvent(event);
       if (!mapped) return;
       dispatch({ type: "event", text: mapped.text });
@@ -45,12 +72,15 @@ export function App({ client, model }: { client: JarvisClient; model: string }) 
   }, [client]);
 
   useKeyboard((key) => {
-    switch (commandForKey(key.name)) {
+    switch (commandForKey(key.name, key.ctrl)) {
       case "help":
         setHelpVisible((visible) => !visible);
         break;
       case "escape":
         setHelpVisible(false);
+        break;
+      case "panel":
+        setPanelVisible((visible) => !visible);
         break;
       case "quit":
         process.exit(0);
@@ -73,35 +103,82 @@ export function App({ client, model }: { client: JarvisClient; model: string }) 
     }
   }
 
+  async function resolveApproval(id: string, approve: boolean) {
+    try {
+      await client.respondToApproval(id, approve);
+      await refreshApprovals();
+    } catch (error) {
+      dispatch({ type: "status", text: `Approval failed: ${String(error)}` });
+    }
+  }
+
   const busy = state.status !== "Ready";
 
   return (
-    <box style={{ flexDirection: "column", height: "100%", backgroundColor: "#0d0d0d" }}>
-      <SessionTabs
-        sessions={state.sessions}
-        activeId={state.sessionId}
-        onSelect={(id) => dispatch({ type: "active-session", text: id })}
-      />
-      <Frame title="Jarvis">
-        <Transcript messages={state.messages} streaming={busy} />
-      </Frame>
-      <box style={{ flexDirection: "row", gap: 1, backgroundColor: "#181818" }}>
-        <Spinner busy={busy} />
-        <Frame title="Events" style={{ height: 4 }}>
-          {state.events.slice(-3).map((line, index) => (
-            <text key={index} content={line} />
-          ))}
+    <box style={{ flexDirection: "row", height: "100%", backgroundColor: "#0d0d0d" }}>
+      <box style={{ flexDirection: "column", flexGrow: 1 }}>
+        <SessionTabs
+          sessions={state.sessions}
+          activeId={state.sessionId}
+          onSelect={(id) => dispatch({ type: "active-session", text: id })}
+        />
+        <Frame title="Jarvis">
+          <Transcript messages={state.messages} streaming={busy} />
         </Frame>
+        <box style={{ flexDirection: "row", gap: 1, backgroundColor: "#181818" }}>
+          <Spinner busy={busy} />
+          <Frame title="Events" style={{ height: 4 }}>
+            {state.events.slice(-3).map((line, index) => (
+              <text key={index} content={line} />
+            ))}
+          </Frame>
+        </box>
+        <Frame title="Prompt">
+          <Prompt onSubmit={(text) => void send(text)} disabled={busy} />
+        </Frame>
+        <StatusBar
+          status={state.status}
+          model={state.model}
+          session={state.sessionId}
+          metrics={state.metrics}
+        />
       </box>
-      <Frame title="Prompt">
-        <Prompt onSubmit={(text) => void send(text)} disabled={busy} />
-      </Frame>
-      <StatusBar
-        status={state.status}
-        model={state.model}
-        session={state.sessionId}
-        metrics={state.metrics}
-      />
+      {panelVisible && (
+        <box style={{ flexDirection: "column", width: 38, backgroundColor: "#141414" }}>
+          <Frame title="Sessions" style={{ height: 8 }}>
+            <SessionManager
+              sessions={state.sessions}
+              activeId={state.sessionId}
+              client={client}
+              onChanged={reloadSessions}
+            />
+          </Frame>
+          <Frame title="Model" style={{ height: 6 }}>
+            <ModelPicker
+              models={models}
+              current={state.model}
+              onSelect={(id) => dispatch({ type: "model", text: id })}
+            />
+          </Frame>
+          <Frame title="Agent" style={{ height: 6 }}>
+            <AgentPicker
+              agents={state.agents}
+              current={state.agentId}
+              onSelect={(id) => dispatch({ type: "active-agent", text: id })}
+            />
+          </Frame>
+          <Frame title="Approvals" style={{ height: 6 }}>
+            <ApprovalPanel
+              approvals={state.approvals}
+              onApprove={(id) => void resolveApproval(id, true)}
+              onDeny={(id) => void resolveApproval(id, false)}
+            />
+          </Frame>
+          <Frame title="Tool calls" style={{ height: 8 }}>
+            <ToolCallPane calls={state.toolCalls} />
+          </Frame>
+        </box>
+      )}
       <HelpOverlay visible={helpVisible} />
     </box>
   );

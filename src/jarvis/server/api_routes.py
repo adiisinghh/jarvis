@@ -65,6 +65,26 @@ class FeedbackScoreRequest(BaseModel):
     source: str = "api"
 
 
+class SessionCreateRequest(BaseModel):
+    """Optional identity fields for ``POST /v1/sessions``.
+
+    When ``user_id`` is omitted a fresh opaque id is generated so every call
+    creates a new session rather than reusing an existing one.
+    """
+
+    user_id: Optional[str] = None
+    channel: str = "api"
+    channel_user_id: Optional[str] = None
+    display_name: str = ""
+
+
+class SessionUpdateRequest(BaseModel):
+    """Metadata patch accepted by ``PATCH /v1/sessions/{session_id}``."""
+
+    title: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class OptimizeRunRequest(BaseModel):
     benchmark: str
     max_trials: int = 20
@@ -111,23 +131,46 @@ async def list_agents(request: Request):
         # Registry names and live agent metadata are administrative state,
         # just like spawn/send/kill.  Authorize before reading either source
         # so default-deny and rate-limit policies cannot be bypassed by GET.
-        result = _execute_agent_admin_tool(request, AgentListTool(), {})
-        _raise_agent_tool_failure(result)
+        try:
+            result = _execute_agent_admin_tool(request, AgentListTool(), {})
+            _raise_agent_tool_failure(result)
+        except HTTPException:
+            # 403/429/404 are security decisions, not availability failures.
+            raise
+        except Exception as exc:
+            # Best effort: a broken admin tool must not turn a read-only
+            # listing endpoint into a 500.  Callers still get safe empty data.
+            logger.warning("Agent listing admin check unavailable: %s", exc)
     except ImportError:
         raise HTTPException(status_code=501, detail="Agent tools not available")
 
     registered = []
+    # TUI-facing view: one entry per registered agent key with a stable ``id``.
+    # Kept alongside the legacy ``registered``/``running`` fields so existing
+    # clients of this endpoint are unaffected.
+    agents = []
     try:
         import jarvis.agents  # noqa: F401 — side-effect registration
         from jarvis.core.registry import AgentRegistry
 
         for key in sorted(AgentRegistry.keys()):
             cls = AgentRegistry.get(key)
+            accepts_tools = getattr(cls, "accepts_tools", False)
+            class_name = getattr(cls, "__name__", str(cls))
             registered.append(
                 {
                     "key": key,
-                    "class": cls.__name__,
-                    "accepts_tools": getattr(cls, "accepts_tools", False),
+                    "class": class_name,
+                    "accepts_tools": accepts_tools,
+                }
+            )
+            agents.append(
+                {
+                    "id": key,
+                    "key": key,
+                    "name": class_name,
+                    "class": class_name,
+                    "accepts_tools": accepts_tools,
                 }
             )
     except Exception as exc:
@@ -141,7 +184,7 @@ async def list_agents(request: Request):
     except ImportError:
         pass
 
-    return {"registered": registered, "running": running}
+    return {"registered": registered, "running": running, "agents": agents}
 
 
 @agents_router.post("")
@@ -596,36 +639,238 @@ async def remove_skill(skill_name: str, request: Request):
 
 sessions_router = APIRouter(prefix="/v1/sessions", tags=["sessions"])
 
+_SESSION_COLUMNS = (
+    "session_id, user_id, display_name, channel_ids,"
+    " created_at, last_activity, metadata"
+)
+
+
+def _open_session_store(request: Request):
+    """Return ``(store, owned)`` for the session routes.
+
+    ``app.state.session_store`` allows a real server (or a test) to inject a
+    store; ``app.state.session_db_path`` selects an isolated database.  The
+    default is the user's normal cross-channel session store.
+    """
+    from jarvis.sessions.session import SessionStore
+
+    injected = getattr(request.app.state, "session_store", None)
+    if injected is not None:
+        return injected, False
+    db_path = getattr(request.app.state, "session_db_path", None)
+    if db_path:
+        return SessionStore(db_path=db_path), True
+    return SessionStore(), True
+
+
+def _close_session_store(store, owned: bool) -> None:
+    """Close only stores this module created; injected ones stay caller-owned."""
+    if not owned:
+        return
+    close = getattr(store, "close", None)
+    if callable(close):
+        try:
+            close()
+        except Exception as exc:
+            logger.debug("Failed to close session store: %s", exc)
+
+
+def _session_to_dict(session) -> dict:
+    """Serialise a ``Session`` (or plain mapping) for API consumers.
+
+    ``Session`` has no ``to_dict`` helper, so expose a stable ``id`` alongside
+    ``session_id`` to match the rest of the v1 API and the terminal UI.
+    """
+    if isinstance(session, dict):
+        data = dict(session)
+    else:
+        identity = getattr(session, "identity", None)
+        data = {
+            "session_id": getattr(session, "session_id", "") or "",
+            "user_id": getattr(identity, "user_id", "") or "",
+            "display_name": getattr(identity, "display_name", "") or "",
+            "created_at": getattr(session, "created_at", 0.0),
+            "last_activity": getattr(session, "last_activity", 0.0),
+            "metadata": dict(getattr(session, "metadata", {}) or {}),
+        }
+    data.setdefault("id", data.get("session_id", ""))
+    title = (data.get("metadata") or {}).get("title")
+    if title:
+        data.setdefault("title", title)
+    return data
+
+
+def _session_row_to_dict(row) -> dict:
+    """Build the same API shape from a raw ``sessions`` table row."""
+    metadata = json.loads(row[6]) if row[6] else {}
+    data = {
+        "session_id": row[0],
+        "user_id": row[1] or "",
+        "display_name": row[2] or "",
+        "created_at": row[4] or 0.0,
+        "last_activity": row[5] or 0.0,
+        "metadata": metadata,
+        "id": row[0],
+    }
+    if metadata.get("title"):
+        data["title"] = metadata["title"]
+    return data
+
+
+def _get_session_dict(store, session_id: str) -> Optional[dict]:
+    """Read a single session without requiring a public ``get`` method."""
+    conn = getattr(store, "_conn", None)
+    if conn is None:
+        return None
+    try:
+        row = conn.execute(
+            f"SELECT {_SESSION_COLUMNS} FROM sessions WHERE session_id = ?",
+            (session_id,),
+        ).fetchone()
+    except Exception as exc:
+        logger.debug("Session lookup failed for %s: %s", session_id, exc)
+        return None
+    return _session_row_to_dict(row) if row is not None else None
+
 
 @sessions_router.get("")
 async def list_sessions(request: Request, limit: int = 20):
-    """List active sessions."""
+    """List recent sessions, most recently active first."""
     try:
-        from jarvis.sessions.store import SessionStore
-
-        store = SessionStore()
-        sessions = store.recent(limit=limit)
-        items = [s.to_dict() if hasattr(s, "to_dict") else str(s) for s in sessions]
-        return {"sessions": items}
+        store, owned = _open_session_store(request)
+        try:
+            sessions = store.list_sessions(active_only=False, limit=limit)
+            return {"sessions": [_session_to_dict(s) for s in sessions]}
+        finally:
+            _close_session_store(store, owned)
     except Exception as exc:
+        logger.warning("Failed to list sessions: %s", exc)
         return {"sessions": [], "error": str(exc)}
+
+
+@sessions_router.post("", status_code=201)
+async def create_session(request: Request, req: Optional[SessionCreateRequest] = None):
+    """Create a fresh session and return its id.
+
+    ``SessionStore`` exposes only ``get_or_create``; passing a freshly minted
+    user id guarantees a new row instead of reusing an existing session.  The
+    body is optional so simple clients can POST with no payload at all.
+    """
+    import uuid
+
+    req = req or SessionCreateRequest()
+    try:
+        store, owned = _open_session_store(request)
+        try:
+            user_id = (req.user_id or "").strip() or f"api-{uuid.uuid4().hex}"
+            session = store.get_or_create(
+                user_id,
+                channel=req.channel or "api",
+                channel_user_id=req.channel_user_id or "",
+                display_name=req.display_name or "",
+            )
+        finally:
+            _close_session_store(store, owned)
+    except Exception as exc:
+        logger.warning("Failed to create session: %s", exc)
+        raise HTTPException(
+            status_code=503, detail=f"Session creation unavailable: {exc}"
+        ) from exc
+
+    data = _session_to_dict(session)
+    return {
+        "status": "created",
+        "id": data["id"],
+        "session_id": data["session_id"],
+        "session": data,
+    }
 
 
 @sessions_router.get("/{session_id}")
 async def get_session(session_id: str, request: Request):
     """Get a specific session."""
     try:
-        from jarvis.sessions.store import SessionStore
-
-        store = SessionStore()
-        session = store.get(session_id)
-        if session is None:
+        store, owned = _open_session_store(request)
+        try:
+            data = _get_session_dict(store, session_id)
+        finally:
+            _close_session_store(store, owned)
+        if data is None:
             raise HTTPException(status_code=404, detail="Session not found")
-        return session.to_dict() if hasattr(session, "to_dict") else {"id": session_id}
+        return data
     except HTTPException:
         raise
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
+
+
+@sessions_router.patch("/{session_id}")
+async def update_session(session_id: str, req: SessionUpdateRequest, request: Request):
+    """Rename / patch session metadata when the store supports it.
+
+    The persistence layer currently has no public metadata-write primitive, so
+    this reports ``not_implemented`` rather than claiming a rename persisted.
+    Existing clients keep getting 200 with a dict body in either mode.
+    """
+    metadata = dict(req.metadata or {})
+    if req.title is not None:
+        metadata["title"] = req.title
+
+    try:
+        store, owned = _open_session_store(request)
+        try:
+            updater = getattr(store, "update_metadata", None) or getattr(
+                store, "rename", None
+            )
+            if callable(updater):
+                if updater(session_id, metadata):
+                    session = _get_session_dict(store, session_id)
+                    return {
+                        "status": "updated",
+                        "id": session_id,
+                        "session": session
+                        or {
+                            "id": session_id,
+                            "session_id": session_id,
+                            "metadata": metadata,
+                        },
+                    }
+        finally:
+            _close_session_store(store, owned)
+    except Exception as exc:
+        logger.warning("Session update failed for %s: %s", session_id, exc)
+
+    return {
+        "status": "not_implemented",
+        "message": (
+            "Session rename/metadata updates are not supported by the "
+            "session store yet"
+        ),
+        "id": session_id,
+    }
+
+
+@sessions_router.delete("/{session_id}")
+async def delete_session(session_id: str, request: Request):
+    """Delete a session when the store supports it (currently it does not)."""
+    try:
+        store, owned = _open_session_store(request)
+        try:
+            deleter = getattr(store, "delete_session", None) or getattr(
+                store, "delete", None
+            )
+            if callable(deleter) and deleter(session_id):
+                return {"status": "deleted", "id": session_id}
+        finally:
+            _close_session_store(store, owned)
+    except Exception as exc:
+        logger.warning("Session deletion failed for %s: %s", session_id, exc)
+
+    return {
+        "status": "not_implemented",
+        "message": "Session deletion is not supported by the session store yet",
+        "id": session_id,
+    }
 
 
 # ---- Budget routes ----

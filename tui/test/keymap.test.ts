@@ -4,7 +4,9 @@ import { commandForKey, formatKeymap } from "../src/keymap";
 test("resolves known keys to commands", () => {
   expect(commandForKey("return")).toBe("submit");
   expect(commandForKey("up")).toBe("history-previous");
-  expect(commandForKey("q")).toBe("quit");
+  expect(commandForKey("q", true)).toBe("quit");
+  expect(commandForKey("q")).toBeUndefined();
+  expect(commandForKey("p", true)).toBe("panel");
   expect(commandForKey("?")).toBe("help");
   expect(commandForKey("f-keys-that-do-not-exist")).toBeUndefined();
 });

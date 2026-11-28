@@ -40,7 +40,10 @@ variables internally. `0.0.0.0` in the server config is translated to
 - **↑ / ↓** walk prompt history; **Tab** accepts an autocomplete suggestion.
 - Type `/` for command completion (`/help`, `/model`, `/clear`, …) or `@` for
   file/path completion.
-- **?** toggles the keyboard help overlay; **Escape** closes it; **q** quits.
+- **?** toggles the keyboard help overlay; **Escape** closes it.
+- **Ctrl+P** toggles the side panel with session management, model and agent
+  pickers, pending approvals, and tool-call details. **Ctrl+Q** quits.
+- Single-letter shortcuts are Ctrl-prefixed so they never steal typed text.
 - The tab strip at the top switches sessions. The status line shows the model,
   session, tokens, latency, energy, and current status.
 
